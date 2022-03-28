@@ -5,7 +5,7 @@
   <meta charset="utf-8">
   <!-- SEO相关 -->
   
-  <link rel="canonical" href="http://yartang.top/2022/03/29/spring transcation 源码简介/"/>
+  <link rel="canonical" href="http://yartang.top/2022/03/28/redis 分布式锁简介/"/>
   <!-- 渲染优化 -->
   <!-- <meta http-equiv='x-dns-prefetch-control' content='on' />
   <link rel='dns-prefetch' href='https://cdn.jsdelivr.net'>
@@ -20,26 +20,27 @@
   <meta content="YarTang&#39;s Blog" name="apple-mobile-web-app-title">
   <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style">
   <meta content="telephone=no" name="format-detection">
-  <link rel="preload" href="/css/style.css?time=1648484897335" as="style">
+  <link rel="preload" href="/css/style.css?time=1648484897345" as="style">
   <link rel="preload" href="/media/fonts/VarelaRound/VarelaRound-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
 <link rel="preload" href="/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
 
   <!-- 页面元数据 -->
-  <title>Spring Transaction 源码简介 - YarTang's Blog</title>
-  <meta name="keywords" content="Spring,事务,null">
-  <meta name="description" content="0. 引言事务管理对系统应用来说必不可少，我们以此来保证数据的完整性和安全性，这点在金融系统中显得尤为重要。笔者在实践中仅仅了解 @Transactional 注解的大概使用方法，对 Spring 事务的实现原理也是一知半解，因此本文将对 Spring Transaction 进行简要分析，核心部分有以下两个方面：  源码的简要分析  声明式和编程式事务的分析   1. 事务回顾 &amp;&amp;am">
+  <title>Redis分布式锁简介 - YarTang's Blog</title>
+  <meta name="keywords" content="redis,分布式锁,分布式算法,null">
+  <meta name="description" content="1. 分布式锁简介在分布式场景下，为了保持数据的最终一致性，可以通过分布式锁、分布式事务来满足业务需求。并发场景下，我们一般需要一个方法在某个时间段内只被一个线程执行。单机环境中，JUC 提供的 API 可以解决并发问题。分布式环境与单机环境有以下区别：  分布式场景不是多线程并发而是多进程并发。 单机场景多线程共享堆内存，可以直接使用内存作为标记的存储位置；分布式场景进程之间可能不在一台物理机上">
 <meta property="og:type" content="article">
-<meta property="og:title" content="Spring Transaction 源码简介">
-<meta property="og:url" content="http://yartang.top/2022/03/29/Spring%20Transcation%20%E6%BA%90%E7%A0%81%E7%AE%80%E4%BB%8B/index.html">
+<meta property="og:title" content="Redis分布式锁简介">
+<meta property="og:url" content="http://yartang.top/2022/03/28/Redis%20%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%AE%80%E4%BB%8B/index.html">
 <meta property="og:site_name" content="YarTang&#39;s Blog">
-<meta property="og:description" content="0. 引言事务管理对系统应用来说必不可少，我们以此来保证数据的完整性和安全性，这点在金融系统中显得尤为重要。笔者在实践中仅仅了解 @Transactional 注解的大概使用方法，对 Spring 事务的实现原理也是一知半解，因此本文将对 Spring Transaction 进行简要分析，核心部分有以下两个方面：  源码的简要分析  声明式和编程式事务的分析   1. 事务回顾 &amp;&amp;am">
+<meta property="og:description" content="1. 分布式锁简介在分布式场景下，为了保持数据的最终一致性，可以通过分布式锁、分布式事务来满足业务需求。并发场景下，我们一般需要一个方法在某个时间段内只被一个线程执行。单机环境中，JUC 提供的 API 可以解决并发问题。分布式环境与单机环境有以下区别：  分布式场景不是多线程并发而是多进程并发。 单机场景多线程共享堆内存，可以直接使用内存作为标记的存储位置；分布式场景进程之间可能不在一台物理机上">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/logo.png">
-<meta property="article:published_time" content="2022-03-28T16:20:39.000Z">
-<meta property="article:modified_time" content="2022-03-28T16:27:31.706Z">
+<meta property="article:published_time" content="2022-03-27T18:39:53.000Z">
+<meta property="article:modified_time" content="2022-03-28T16:27:47.924Z">
 <meta property="article:author" content="yartang">
-<meta property="article:tag" content="Spring">
-<meta property="article:tag" content="事务">
+<meta property="article:tag" content="redis">
+<meta property="article:tag" content="分布式锁">
+<meta property="article:tag" content="分布式算法">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/logo.png">
   <!-- feed -->
@@ -1793,8 +1794,8 @@ ul.list-v >li>a:hover {
 }
 
   </style>
-  <link rel="stylesheet" href="/css/style.css?time=1648484897335" media="print" onload="this.media='all';this.onload=null">
-  <noscript><link rel="stylesheet" href="/css/style.css?time=1648484897335"></noscript>
+  <link rel="stylesheet" href="/css/style.css?time=1648484897345" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css?time=1648484897345"></noscript>
     <script>
       let userColorScheme=localStorage.getItem("color-scheme")
       if(userColorScheme){
@@ -1871,7 +1872,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
   volantis.dom = {}; // 页面Dom see: /source/js/app.js etc.
 
   volantis.GLOBAL_CONFIG ={
-    cdn: {"js":{"app":"/js/app.js?time=1648484897335","sites":"/js/plugins/sites.js?time=1648484897335","friends":"/js/plugins/friends.js?time=1648484897335","parallax":"/js/plugins/parallax.js?time=1648484897335","rightMenu":"/js/plugins/rightMenu.js?time=1648484897335","contributors":"/js/plugins/contributors.js?time=1648484897335","message":"/js/thirdparty/message.js?time=1648484897335","valine":"https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648484897335","search":"/js/search/hexo.js?time=1648484897335"},"css":{"style":"/css/style.css?time=1648484897335","message":"/css/message.css?time=1648484897335"}},
+    cdn: {"js":{"app":"/js/app.js?time=1648484897345","sites":"/js/plugins/sites.js?time=1648484897345","friends":"/js/plugins/friends.js?time=1648484897345","parallax":"/js/plugins/parallax.js?time=1648484897345","rightMenu":"/js/plugins/rightMenu.js?time=1648484897345","contributors":"/js/plugins/contributors.js?time=1648484897345","message":"/js/thirdparty/message.js?time=1648484897345","valine":"https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648484897345","search":"/js/search/hexo.js?time=1648484897345"},"css":{"style":"/css/style.css?time=1648484897345","message":"/css/message.css?time=1648484897345"}},
     default: {"avatar":"/media/placeholder/avatar/round/3442075.svg","link":"/media/placeholder/link/8f277b4ee0ecd.svg","cover":"/media/placeholder/cover/76b86c0226ffd.svg","image":"/media/placeholder/image/2659360.svg"},
     lastupdate: new Date('Tue Mar 29 2022 00:28:17 GMT+0800 (中国标准时间)'),
     sidebar: {
@@ -2551,7 +2552,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
           
 <div id="l_main" class=''>
   <article itemscope itemtype="http://schema.org/Article" class="article post white-box reveal md shadow article-type-post" id="post" itemscope itemprop="blogPost">
-  <link itemprop="mainEntityOfPage" href="http://yartang.top/2022/03/29/Spring%20Transcation%20%E6%BA%90%E7%A0%81%E7%AE%80%E4%BB%8B/">
+  <link itemprop="mainEntityOfPage" href="http://yartang.top/2022/03/28/Redis%20%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%AE%80%E4%BB%8B/">
   <span hidden itemprop="publisher" itemscope itemtype="http://schema.org/Organization">
     <meta itemprop="name" content="YarTang's Blog">
   </span>
@@ -2572,7 +2573,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     
     
       <h1 class="title" itemprop="name headline">
-        Spring Transaction 源码简介
+        Redis分布式锁简介
       </h1>
       <div class='new-meta-box'>
         
@@ -2589,14 +2590,24 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
         
           
             
+  <div class='new-meta-item category'>
+    <i class="fa-solid fa-folder-open fa-fw" aria-hidden="true"></i>
+    <a class="category-link" href="/categories/redis/">redis</a>
+    
+      <span hidden itemprop="about" itemscope itemtype="http://schema.org/Thing">
+        <a href="/categories/redis/" itemprop="url"><span itemprop="name">redis</span></a>
+      </span>
+    
+  </div>
+
 
           
         
           
-            <div class="new-meta-item date" itemprop="dateCreated datePublished" datetime="2022-03-29T00:20:39+08:00">
+            <div class="new-meta-item date" itemprop="dateCreated datePublished" datetime="2022-03-28T02:39:53+08:00">
   <a class='notlink'>
     <i class="fa-solid fa-calendar-alt fa-fw" aria-hidden="true"></i>
-    <p>发布于：2022年3月29日</p>
+    <p>发布于：2022年3月28日</p>
   </a>
 </div>
 
@@ -2607,13 +2618,13 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
   <div class="new-meta-item wordcount">
     <a class='notlink'>
       <i class="fa-solid fa-keyboard fa-fw" aria-hidden="true"></i>
-      <p>字数：6.1k 字</p>
+      <p>字数：5.7k 字</p>
     </a>
   </div>
   <div class="new-meta-item readtime">
     <a class='notlink'>
       <i class="fa-solid fa-hourglass-half fa-fw" aria-hidden="true"></i>
-      <p>时长：24 分钟</p>
+      <p>时长：22 分钟</p>
     </a>
   </div>
 
@@ -2630,283 +2641,172 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
   <div id="layoutHelper-page-plugins"></div>
   <div id="post-body" itemprop="articleBody">
-    <h1 id="0-引言"><a href="#0-引言" class="headerlink" title="0. 引言"></a>0. 引言</h1><p>事务管理对系统应用来说必不可少，我们以此来保证数据的完整性和安全性，这点在金融系统中显得尤为重要。笔者在实践中仅仅了解 <code>@Transactional</code> 注解的大概使用方法，对 Spring 事务的实现原理也是一知半解，因此本文将对 Spring Transaction 进行简要分析，核心部分有以下两个方面：</p>
+    <h1 id="1-分布式锁简介"><a href="#1-分布式锁简介" class="headerlink" title="1. 分布式锁简介"></a>1. 分布式锁简介</h1><p>在分布式场景下，为了保持数据的最终一致性，可以通过<strong>分布式锁</strong>、<strong>分布式事务</strong>来满足业务需求。并发场景下，我们一般需要一个方法在某个时间段内只被一个线程执行。单机环境中，JUC 提供的 API 可以解决并发问题。分布式环境与单机环境有以下区别：</p>
 <ul>
-<li><p>源码的简要分析</p>
-</li>
-<li><p>声明式和编程式事务的分析</p>
-</li>
+<li>分布式场景不是多线程并发而是多进程并发。</li>
+<li>单机场景多线程共享堆内存，可以直接使用内存作为标记的存储位置；分布式场景进程之间可能不在一台物理机上，需要使标记对所有进程可见。</li>
 </ul>
-<h1 id="1-事务回顾-amp-amp-Spring-Transaction-简介"><a href="#1-事务回顾-amp-amp-Spring-Transaction-简介" class="headerlink" title="1. 事务回顾 &amp;&amp; Spring Transaction 简介"></a>1. 事务回顾 &amp;&amp; Spring Transaction 简介</h1><p>事务（Transaction）是数据库区别于文件系统的重要特征之一，目前国际认可的数据库设计原则是 ACID 特性，用以保证数据库事务的正确执行。Mysql 的 innodb 引擎中的事务就完全符合 ACID 特性。</p>
-<p>近年来分布式系统和微服务架构的盛行，催生了分布式事务，以保证大规模分布式环境下事务的最终一致性。本文主要通过单机事务对 Spring 事务原理进行分析，不涉及分布式事务原理。</p>
-<p>Spring 对于事务的支持，分层概览图如 Fig. 1-1：</p>
-<p><img src="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647703785356spring-transaction-layer.png" class="lazyload" data-srcset="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647703785356spring-transaction-layer.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Spring Transaction Layer"></p>
-<p>Fig. 1-1 Spring Transaction Layer</p>
-<h2 id="1-1-事务回顾"><a href="#1-1-事务回顾" class="headerlink" title="1.1 事务回顾"></a>1.1 事务回顾</h2><div class="story post-story"><h3 id="1-1-1-事务的-ACID-特性"><a href="#1-1-1-事务的-ACID-特性" class="headerlink" title="1.1.1 事务的 ACID 特性"></a>1.1.1 事务的 ACID 特性</h3><ul>
-<li>原子性（Atomicity）</li>
-<li>一致性（Consistency）</li>
-<li>隔离性（Isolation）</li>
-<li>持久性（Durability）</li>
-</ul>
-<h3 id="1-1-2-事务的隔离级别"><a href="#1-1-2-事务的隔离级别" class="headerlink" title="1.1.2 事务的隔离级别"></a>1.1.2 事务的隔离级别</h3><h4 id="数据库读写的三个问题"><a href="#数据库读写的三个问题" class="headerlink" title="数据库读写的三个问题"></a>数据库读写的三个问题</h4><ul>
-<li><p>脏读（Drity Read）：事务A更新记录但未提交，事务B查询出A未提交记录。</p>
-</li>
-<li><p>不可重复读（Non-repeatable read）：事务A读取一次，此时事务B对数据进行了更新或删除操作，事务A再次查询数据不一致。</p>
-</li>
-<li><p>幻读（Phantom Read）：事务A读取一次，此时事务B插入一条数据事务A再次查询，记录多了。</p>
-</li>
-</ul>
-<h4 id="mysql-底层支持"><a href="#mysql-底层支持" class="headerlink" title="mysql 底层支持"></a>mysql 底层支持</h4><p>在 MVCC 中存在两种读操作，快照读（Snapshot Read）和当前读（Current Read）</p>
-<h5 id="快照读（一致性非锁定读）"><a href="#快照读（一致性非锁定读）" class="headerlink" title="快照读（一致性非锁定读）"></a>快照读（一致性非锁定读）</h5><p>一致性非锁定读(consistent nonlocking read)是指InnoDB存储引擎通过多版本控制(multi versionning)的方式来读取当前执行时间数据库中行的数据，如果读取的行正在执行DELETE或UPDATE操作，这是读取操作不会因此等待行上锁的释放。相反的，InnoDB会去读取行的一个快照数据。这种方式实际上就是普通的 select。</p>
-<h5 id="当前读（锁定读）"><a href="#当前读（锁定读）" class="headerlink" title="当前读（锁定读）"></a>当前读（锁定读）</h5><ul>
-<li>select * from table where ? lock in share mode; # 对读取的行加共享锁（S锁），其他事务可以加排他锁（X锁）</li>
-<li>select * from table where ? for update; # 对读取的行加 X 锁，其他事务不能再加任何锁</li>
-<li>insert, update, delete 操作前会先进行一次当前读，加 X 锁</li>
-</ul>
-<p>其中前两种锁定读，需要用户自己显式使用，最后一种是自动添加的。需要注意的是这两种锁都必须处于事务中，事务 commit，锁释放。所以必须 begin 或者 start transaction 开启一个事务或者索性 <code>set autocommit=0</code> 把自动提交关掉（mysql默认是1，即执行完sql立即提交）</p>
-<h4 id="分级处理策略"><a href="#分级处理策略" class="headerlink" title="分级处理策略"></a>分级处理策略</h4><p>InnoDB使用不同的锁定策略支持每个事务隔离级别。对于关键数据的操作（遵从 ACID 原则），您可以使用强一致性（默认 Repeatable Read）。对于不是那么重要的数据操作，可以使用 Read Committed/Read Uncommitted 。Serializable 执行比可重读更严格的规则，用于特殊场景：XA 事务，并发性和死锁问题的故障排除。</p>
-<p><strong>四种隔离级别</strong></p>
+<h2 id="1-1-分布式锁的应用场景"><a href="#1-1-分布式锁的应用场景" class="headerlink" title="1.1 分布式锁的应用场景"></a>1.1 分布式锁的应用场景</h2><div class="story post-story"><p>Matin Kleppmann 是剑桥大学的分布式系统研究员，他认为分布式锁的使用场景一般是为了效率或者正确性。</p>
 <ul>
-<li><p>Read Uncommitted（读取未提交内容）</p>
-</li>
-<li><p>Read Committed（读取提交内容）</p>
-</li>
-<li><p>Repeatable Read（可重读）</p>
-</li>
-<li><p>Serializable（可串行化）：这是最高的隔离级别，它是在每个读的数据行上加上共享锁（LOCK IN SHARE MODE）。在这个级别，可能导致大量的超时现象和锁竞争，主要用于分布式事务。</p>
-</li>
+<li>效率：加锁可以避免重复工作，节约资源（例如一些昂贵的计算），避免一些代价较小的问题。</li>
+<li>正确性：加锁可以避免破坏正确性操作，如果锁失败，两个节点对同一条数据进行操作，可能导致文件损坏、数据丢失、永久性不一致等代价高昂的问题。</li>
 </ul>
-</div><h2 id="1-2-Spring-Transaction-简介"><a href="#1-2-Spring-Transaction-简介" class="headerlink" title="1.2 Spring Transaction 简介"></a>1.2 Spring Transaction 简介</h2><div class="story post-story"><h3 id="1-2-1-Spring-Transaction-属性"><a href="#1-2-1-Spring-Transaction-属性" class="headerlink" title="1.2.1 Spring Transaction 属性"></a>1.2.1 Spring Transaction 属性</h3><p>Spring Transaction 为了保证事务的 ACID 属性，定义了 6 个属性，对应 @Transaction(key1 = *, key2 = * …) 注解中 6 个属性。</p>
-<ul>
-<li>事务名称：用户可手动指定事务的名称，当多个事务的时候，可区分使用哪个事务。对应注解中的属性 value、transactionManager</li>
-<li>隔离级别: 为了解决数据库容易出现的问题，分级加锁处理策略。对应注解中的属性 isolation</li>
-<li>超时时间: 定义一个事务执行过程多久算超时，以便超时后回滚。可以防止长期运行的事务占用资源。对应注解中的属性 timeout</li>
-<li>是否只读：表示这个事务只读取数据但不更新数据, 这样可以帮助数据库引擎优化事务。对应注解中的属性 readOnly</li>
-<li>传播机制: 对事务的传播特性进行定义，共有7种类型。对应注解中的属性 propagation</li>
-<li>回滚机制：定义遇到异常时回滚策略。对应注解中的属性 rollbackFor、noRollbackFor、rollbackForClassName、noRollbackForClassName</li>
+</div><h2 id="1-2-分布式锁的特点"><a href="#1-2-分布式锁的特点" class="headerlink" title="1.2 分布式锁的特点"></a>1.2 分布式锁的特点</h2><div class="story post-story"><ul>
+<li>互斥性：和我们本地锁一样互斥性是最基本，但是分布式锁需要保证在不同节点的不同线程的互斥。</li>
+<li>可重入性：同一个节点上的同一个线程如果获取了锁之后那么也可以再次获取这个锁。</li>
+<li>锁超时：和本地锁一样支持锁超时，防止死锁。</li>
+<li>高效，高可用：加锁和解锁需要高效，同时也需要保证高可用防止分布式锁失效，可以增加降级。</li>
+<li>支持阻塞和非阻塞：和 ReentrantLock 一样支持 lock 和 trylock 以及 tryLock（long timeout）。</li>
+<li>支持公平锁和非公平锁（可选）：公平锁的意思是按照请求加锁的顺序获得锁，非公平锁就相反是无序的。这个一般来说实现的比较少。</li>
 </ul>
-<p>其中隔离级别即是上文理论的实现，下文将详细分析 Spring Transaction 的传播机制。</p>
-<h4 id="传播机制"><a href="#传播机制" class="headerlink" title="传播机制"></a>传播机制</h4><p>当事务方法被另一个事务方法调用时，必须指定事务应该如何传播。例如：方法可能继续在现有事务中运行，也可能开启一个新事务，并在自己的事务中运行。org.springframework.transaction 包下有一个事务定义接口 TransactionDefinition，定义了 7 种事务传播机制，官方文档翻译如下：</p>
-<ul>
-<li><p>PROPAGATION_REQUIRED<br>支持当前事务；如果不存在，创建一个新的。这通常是事务定义的默认设置，通常定义事务同步作用域。</p>
-</li>
-<li><p>PROPAGATION_SUPPORTS<br>支持当前事务；如果不存在事务，则以非事务方式执行。</p>
-</li>
-<li><p>PROPAGATION_MANDATORY<br>支持当前事务；如果当前事务不存在，抛出异常。</p>
-</li>
-<li><p>PROPAGATION_REQUIRES_NEW<br>创建一个新事务，如果存在当前事务，则挂起当前事务。</p>
-</li>
-<li><p>PROPAGATION_NOT_SUPPORTED<br>不支持当前事务，存在事务挂起当前事务;始终以非事务方式执行。类似于同名的EJB事务属性。</p>
-</li>
-<li><p>PROPAGATION_NEVER<br>不支持当前事务；如果当前事务存在，抛出异常。</p>
-</li>
-<li><p>PROPAGATION_NESTED<br>如果当前事务存在，则在嵌套事务中执行，如果当前没有事务，类似PROPAGATION_REQUIRED（创建一个新的）。</p>
-</li>
-</ul>
-</div><h2 id="1-2-2-两种实现方式"><a href="#1-2-2-两种实现方式" class="headerlink" title="1.2.2 两种实现方式"></a>1.2.2 两种实现方式</h2><div class="story post-story"><p>在Spring中，事务有两种实现方式</p>
-<ul>
-<li><p>声明式事务管理：添加 @Transactional 注解，并定义传播机制和回滚策略。基于Spring AOP 实现，本质是对方法前后进行拦截，然后在目标方法开始之前创建或者加入一个事务，在执行完目标方法之后根据执行情况提交或者回滚事务。声明式有助于用户将操作与事务操作规则进行解耦，既起到事务管理的作用，又不影响业务代码的具体实现。</p>
-</li>
-<li><p>编程式事务管理：编程式事务管理使用底层源码可实现更细粒度的事务控制，允许用户在代码中精确定义事务的边界。Spring推荐使用 TransactionTemplate，典型的模板模式。</p>
-</li>
-</ul>
-<p>下面将分别使用两种方式，实现对账户金额的更新。cash_table 结构如下：</p>
-<table>
-<thead>
-<tr>
-<th></th>
-<th>id</th>
-<th>name</th>
-<th>cash</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>1</td>
-<td>1</td>
-<td>mayun</td>
-<td>2000</td>
-</tr>
-<tr>
-<td>2</td>
-<td>2</td>
-<td>mahuteng</td>
-<td>10000</td>
-</tr>
-<tr>
-<td>3</td>
-<td>3</td>
-<td>jianling</td>
-<td>111111</td>
-</tr>
-<tr>
-<td>4</td>
-<td>4</td>
-<td>huazi</td>
-<td>10000</td>
-</tr>
-</tbody></table>
-<h3 id="声明式事务管理"><a href="#声明式事务管理" class="headerlink" title="声明式事务管理"></a>声明式事务管理</h3><p>只需要在 service.impl 层，业务方法上添加 @Transactional 注解，定义事务的传播机制为 REQUIRED（不写这个参数，默认就是 REQUIRED ），遇到 Exception 异常就一起回滚。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Transactional(propagation = Propagation.REQUIRED, rollbackFor = Exception.class)</span></span><br><span class="line"><span class="keyword">public</span> Response <span class="title function_">annotationTransaction</span><span class="params">(Integer id, Integer cash)</span> &#123;</span><br><span class="line">    <span class="type">Integer</span> <span class="variable">oldCash</span> <span class="operator">=</span> cashDAO.selectById(id).getCash();</span><br><span class="line">    <span class="type">int</span> <span class="variable">updateRes</span> <span class="operator">=</span> cashDAO.updateById(id, oldCash + cash);</span><br><span class="line">    <span class="comment">// 模拟业务逻辑的错误</span></span><br><span class="line">    <span class="keyword">if</span> (oldCash + cash &lt; <span class="number">0</span>) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(<span class="string">&quot;cash is not enough! please check again.&quot;</span>);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">return</span> <span class="variable">updateRes</span> <span class="operator">=</span>= <span class="number">1</span> ? Response.SUCCESS : Response.FAIL;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="编程式事务管理"><a href="#编程式事务管理" class="headerlink" title="编程式事务管理"></a>编程式事务管理</h3><p>编程式事务管理，使用 Spring 推荐的 transactionTemplate。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Resource</span></span><br><span class="line">TransactionTemplate transactionTemplate;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> Response <span class="title function_">programTransaction</span><span class="params">(Integer id, Integer cash)</span> &#123;</span><br><span class="line">    transactionTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRED);</span><br><span class="line">    transactionTemplate.execute(status -&gt; &#123;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="type">Integer</span> <span class="variable">oldCash</span> <span class="operator">=</span> cashDAO.selectById(id).getCash();</span><br><span class="line"></span><br><span class="line">            <span class="type">int</span> <span class="variable">updateRes</span> <span class="operator">=</span> cashDAO.updateById(id, oldCash + cash);</span><br><span class="line">            <span class="comment">// 模拟业务逻辑的错误</span></span><br><span class="line">            <span class="keyword">if</span> (oldCash + cash &lt; <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">RuntimeException</span>(<span class="string">&quot;cash is not enough! please check again.&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="type">return</span> <span class="variable">updateRes</span> <span class="operator">=</span>= <span class="number">1</span> ? Response.SUCCESS : Response.FAIL;</span><br><span class="line">        &#125; <span class="keyword">catch</span> (Exception e) &#123;</span><br><span class="line">            status.setRollbackOnly();</span><br><span class="line">            <span class="keyword">return</span> Response.FAIL;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">return</span> Response.FAIL;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>注意：</p>
-<ul>
-<li><p>可以不用try catch，transactionTemplate.execute自己会捕捉异常并回滚。</p>
-</li>
-<li><p>如果有业务异常需要特殊处理，记得：status.setRollbackOnly(); 标识为回滚。</p>
-</li>
-</ul>
-<h3 id="运行结果"><a href="#运行结果" class="headerlink" title="运行结果"></a>运行结果</h3><p>传入参数 id = 2， cash = -10000000，运行结果如下：</p>
+<h1 id="2-RedLock-算法"><a href="#2-RedLock-算法" class="headerlink" title="2. RedLock 算法"></a>2. RedLock 算法</h1></div><h2 id="2-1-单-Redis-实例分布式锁实现分析"><a href="#2-1-单-Redis-实例分布式锁实现分析" class="headerlink" title="2.1 单 Redis 实例分布式锁实现分析"></a>2.1 单 Redis 实例分布式锁实现分析</h2><div class="story post-story"><p>使用 Redis 锁定资源最简单的方法是客户端请求锁时在单个 Redis 实例中创建 key，并加上过期时间（TTL），防止死锁。当客户端释放锁，删除 key。此时我们的架构中只有一个 Redis 实例，无法应对单点失败的场景。如果使用主从结构，由于 Redis 的备份异步进行，该情况下我们无法实现锁的互斥性。</p>
+<p>一个简单的竞争场景（主从结构）如下：</p>
+<ol>
+<li>客户端 A 在 master 节点中获得锁；</li>
+<li>在将 key 备份到 slave 节点前，master 节点间宕机；</li>
+<li>slave 节点被提为 master 节点；</li>
+<li>客户端 B 请求与 A 相同的资源并成功获得锁，此时 A 并未释放该资源。</li>
+</ol>
+<h3 id="单-Redis-实例分布式锁的正确实现"><a href="#单-Redis-实例分布式锁的正确实现" class="headerlink" title="单 Redis 实例分布式锁的正确实现"></a>单 Redis 实例分布式锁的正确实现</h3><p>可以通过增设随机值实现锁的互斥性，安全地获取锁和释放锁，该算法是实现 Redis 分布式锁的基础。</p>
 <blockquote>
-<p><strong>命令行输出</strong>：<br>programResponse: FAIL<br><strong>mysql 日志</strong>：<br>Query    SELECT @@tx_isolation<br>Query    set autocommit=0<br>Query    select id, name, cash from table_cash where id = 2<br>Query    update table_cash set cash = -9990000 where id = 2<br>Query    ROLLBACK<br>Query    set autocommit=1<br><strong>cash_table 结构</strong>:<br>1,mayun,2000</p>
+<p>set resource_name my_random_value NX PX 30000</p>
 </blockquote>
-<p>可以从 mysql 的日志文件中发现，事务进行了 rollback，表中的数据修改不成功。</p>
-<h1 id="2-Spring-Transaction-源码分析"><a href="#2-Spring-Transaction-源码分析" class="headerlink" title="2. Spring Transaction 源码分析"></a>2. Spring Transaction 源码分析</h1></div><h2 id="2-1-初步理解"><a href="#2-1-初步理解" class="headerlink" title="2.1 初步理解"></a>2.1 初步理解</h2><div class="story post-story"><h3 id="2-1-1-核心接口"><a href="#2-1-1-核心接口" class="headerlink" title="2.1.1 核心接口"></a>2.1.1 核心接口</h3><p>Spring Transaction Manager 的实现有许多细节，如果对整个接口框架有个大体了解会非常有利于我们理解事务，下面通过讲解 Spring 的事务接口来了解Spring实现事务的具体策略。</p>
-<p><img src="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647703871919spring-transaction-interface.png" class="lazyload" data-srcset="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647703871919spring-transaction-interface.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="spring transaction interface"></p>
-<p>Fig 2.1.1 Spring Transaction 管理核心接口示意图</p>
-<h3 id="2-1-2-事务管理器-PlatformTransactionManager"><a href="#2-1-2-事务管理器-PlatformTransactionManager" class="headerlink" title="2.1.2 事务管理器 - PlatformTransactionManager"></a>2.1.2 事务管理器 - PlatformTransactionManager</h3><p>Spring 并不直接管理事务，而是提供了多种事务管理器，他们将事务管理的职责委托给Hibernate 或者 JTA 等持久化机制所提供的相关平台框架的事务来实现。</p>
-<p>Spring 事务管理器的接口是 org.springframework.transaction.PlatformTransactionManager，通过这个接口，Spring 为各个平台如 JDBC、Hibernate 等都提供了对应的事务管理器，但是具体的实现就是各个平台自己的事情了。此接口的内容如下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">PlatformTransactionManager</span> <span class="keyword">extends</span> <span class="title class_">TransactionManager</span> &#123;</span><br><span class="line">    <span class="comment">// 由 TransactionDefinition 获得 TransactionStatus</span></span><br><span class="line">    TransactionStatus <span class="title function_">getTransaction</span><span class="params">(<span class="meta">@Nullable</span> TransactionDefinition definition)</span> <span class="keyword">throws</span> TransactionException;</span><br><span class="line">    <span class="comment">// 提交</span></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">commit</span><span class="params">(TransactionStatus status)</span> <span class="keyword">throws</span> TransactionException;</span><br><span class="line">    <span class="comment">// 回滚</span></span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">rollback</span><span class="params">(TransactionStatus status)</span> <span class="keyword">throws</span> TransactionException;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>其类图如Fig 2.1.2：</p>
-<p><img src="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647704019843platform-transaction-manager-diagram.png" class="lazyload" data-srcset="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647704019843platform-transaction-manager-diagram.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="platform-transaction-manager-diagram"></p>
-<p>Fig 2.1.2 PlatformTransactionManager 类图 </p>
-<p>具体的具体的事务管理机制对Spring来说是透明的，它并不关心那些，那些是对应各个平台需要关心的，所以Spring事务管理的一个优点就是为不同的事务API提供一致的编程模型，如JTA、JDBC、Hibernate、JPA。</p>
+<p><strong>my_random_value</strong> 是一个随机值，该锁的所有竞争者的随机值都不能一样。释放锁时，只有 key 存在且存储的值和设置的值相同才能删除成功。可以通过以下 lua 脚本实现：</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">if</span> redis.call(<span class="string">&quot;get&quot;</span>,KEYS[<span class="number">1</span>]) == ARGV[<span class="number">1</span>] <span class="keyword">then</span></span><br><span class="line">    <span class="keyword">return</span> redis.call(<span class="string">&quot;del&quot;</span>,KEYS[<span class="number">1</span>])</span><br><span class="line"><span class="keyword">else</span></span><br><span class="line">    <span class="keyword">return</span> <span class="number">0</span></span><br><span class="line"><span class="keyword">end</span></span><br></pre></td></tr></table></figure>
+<p>通过 lua 脚本保证了 get-check-delete 是一个原子操作。</p>
+<p>基于Redis单实例，假设这个单实例总是可用，这种方法已经足够安全。</p>
+</div><h2 id="2-2-Redlock-算法概述"><a href="#2-2-Redlock-算法概述" class="headerlink" title="2.2 Redlock 算法概述"></a>2.2 Redlock 算法概述</h2><div class="story post-story"><p>在 Redis 分布式环境中，假设存在 N 个 Redis master，这些节点完全独立，且不存在主从复制或者其他集群协调机制，并且这些节点使用单节点的方法安全地请求和释放锁。</p>
+<p>接下来介绍几个重要环节。</p>
+<h3 id="2-2-1-请求锁"><a href="#2-2-1-请求锁" class="headerlink" title="2.2.1 请求锁"></a>2.2.1 请求锁</h3><ol>
+<li>获取当前 Unix 时间 <strong>startTime</strong>，单位为 ms。</li>
+<li>依次尝试 N 个实例，使用相同的 key 和 随机值获得锁。在向 Redis 实例请求锁时，需要设置一个网络连接和响应超时的时间，避免实例挂掉客户端继续等待的情况。如果响应时间超时，客户端尝试下一个实例。</li>
+<li>使用当前时间减去 <strong>startTime</strong> 得到锁获得时间 <strong>getKeyDuration</strong>，当且仅当从大多数 Redis 节点（N / 2 + 1）获取到锁，并且 max{<strong>getKeyDuration</strong>} 小于锁失效时间，锁才获得成功。</li>
+<li>key 的真正有效时长 VT（Valid Time）= expireTime - getKeyDuration。</li>
+<li>当获取锁失败时，客户端应该在所有获取锁成功的实例上解锁。同时应该在一个随机时延后再重试，防止多个客户端同时竞争同一个锁（导致脑裂，即不同客户端不能完全获得所有实例的锁）。</li>
+</ol>
+<h3 id="2-2-2-释放锁"><a href="#2-2-2-释放锁" class="headerlink" title="2.2.2 释放锁"></a>2.2.2 释放锁</h3><p>向所有 Redis 实例发送释放锁命令。这个点看起来比较简单，笔者当时觉得这只是一种类 roll back 操作，且仅仅针对获取锁成功的实例。实际上从分布式系统的角度上来看，作为一个异步通信模型，不仅仅需要考虑客户端到服务器的通信，也要考虑服务器到客户端是否正常。</p>
+<p>设想这样一个场景：客户端申请锁的请求到达某个 Redis 节点，且该节点也执行了 SET 操作，但是由于网络问题，节点返回的响应包丢失。在 Redis 看来加锁成功，在客户端看来请求锁的操作由于超时失败。因此为了避免脑裂的发生，需要对所有 Redis 实例发送释放锁命令。</p>
+<h3 id="2-2-3-Redlock-安全性讨论"><a href="#2-2-3-Redlock-安全性讨论" class="headerlink" title="2.2.3 Redlock 安全性讨论"></a>2.2.3 Redlock 安全性讨论</h3><p>Redlock 通过设置两个必要条件（获得大多数锁且实际VT大于0）保证锁的互斥性。然而在某些节点崩溃重启的场景下，Redlock 真的互斥吗？</p>
+<p>假设一共有 5 个 Redis 实例 A、B、C、D、E，客户端 1、2 在请求锁时发生以下事件序列：</p>
+<ol>
+<li>客户端成功锁住实例 ABC，由于网络延迟等原因没有锁住 DE。</li>
+<li>节点 C 崩溃重启，客户端 1 在实例 C 上设置的 key 没有完成持久化。</li>
+<li>节点 C 重启，客户端 2 成功锁住实例 CDE。</li>
+<li>客户端 1,2 都认为自己持有锁。</li>
+</ol>
+<p>以上场景两个客户端同时获得了锁，破坏了锁的互斥性。默认情况下，Redis 的 AOF 持久化方式是 <code>appendfsync everysec</code>，最坏的情况是丢失一秒的数据，为了安全性可以将其设置为 <code>appednfsync always</code>。除此以外，为了应对这一情况，Redlock 提出了一种<strong>延迟重启</strong>的方案，即 Redis 实例宕机后的重启时间应该大于客户端的有效时间，使节点对客户端不可用，以在改动 AOF 策略情况下保证锁的安全性。</p>
+<h1 id="3-Martin-Kleppmann-与-antirez-的争论"><a href="#3-Martin-Kleppmann-与-antirez-的争论" class="headerlink" title="3. Martin Kleppmann 与 antirez 的争论"></a>3. Martin Kleppmann 与 antirez 的争论</h1><p>2016年2月8日 Kleppmann 在博客上发表了一篇文章 《<a target="_blank" rel="noopener" href="https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html">How to do distributed locking</a>》 对 Redlock 的安全性进行讨论。后来 antirez 在个人网站上发表了文章 《<a target="_blank" rel="noopener" href="http://antirez.com/news/101">Is Redlock safe?</a>》 回复了 Kleppmann 的质疑。</p>
+</div><h2 id="3-1-Kleppmann-的观点"><a href="#3-1-Kleppmann-的观点" class="headerlink" title="3.1 Kleppmann 的观点"></a>3.1 Kleppmann 的观点</h2><div class="story post-story"><p>Kleppmann 的文章大致可以分为两部分：</p>
 <ul>
-<li><p>JDBC 事务：使用 org.springframework.jdbc.datasource.DatasourceTransactionManager 处理事务边界。实际上 DatasourceTransactionManager 是使用 java.sql.Connection 管理事务，在 Connection#commit() 和 Connection#rollback() 上做了一层封装，进行事务的提交与回滚。</p>
-</li>
-<li><p>Hibernate 事务：HibernateTransactionManager的实现细节是它将事务管理的职责委托给org.hibernate.Transaction当事务成功完成时，调用Transaction#commit()，反之，将会调用rollback()方法。</p>
-</li>
-<li><p>JPA 事务：JpaTransactionManager只需要装配一个JPA实体管理工厂（javax.persistence.EntityManagerFactory接口的任意实现）。JpaTransactionManager将与由工厂所产生的JPA EntityManager合作来构建事务。</p>
-</li>
-<li><p>JTA 事务：如果你没有使用以上所述的事务管理，或者是跨越了多个事务管理源（比如两个或者是多个不同的数据源，分布式事务等），你就需要使用JtaTransactionManager。JtaTransactionManager将事务管理的责任委托给javax.transaction.UserTransaction和javax.transaction.TransactionManager，其中事务成功完成通过UserTransaction#commit()方法提交，事务失败通过UserTransaction#rollback()方法回滚。</p>
-</li>
+<li>与 Redlock 无关。主要是分布式锁的相关问题，他分析得出即使存在一个完美实现的分布式锁（且实现了自动过期时间功能），如果服务端不提供 fencing 等机制，分布式锁也是不安全的。</li>
+<li>对 Redlock 本身的批评。由于 Redlock 本质上是建立在一个同步模型之上，对系统的记时假设（timing assumption）有很强的要求，因此本身的安全性不够。</li>
 </ul>
-<p>以上几种事务管理器（包括 AbstractPlatformTransactionManager）的实现比较复杂，本文将在 2.4 节中详细介绍。</p>
-<h3 id="2-1-3-基本事务属性定义-TransactionDefinition"><a href="#2-1-3-基本事务属性定义-TransactionDefinition" class="headerlink" title="2.1.3 基本事务属性定义 - TransactionDefinition"></a>2.1.3 基本事务属性定义 - TransactionDefinition</h3><p>PlatformTransactionManager#getTransaction(TransactionDefinition definition)方法得到事务，这个方法里面的参数是 TransactionDefinition 类，这个类就定义了 1.2.1 节中的事务属性。</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">TransactionDefinition</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">default</span> <span class="type">int</span> <span class="title function_">getPropagationBehavior</span><span class="params">()</span>；</span><br><span class="line"></span><br><span class="line">    <span class="keyword">default</span> <span class="type">int</span> <span class="title function_">getIsolationLevel</span><span class="params">()</span>；</span><br><span class="line"></span><br><span class="line">    <span class="keyword">default</span> <span class="type">int</span> <span class="title function_">getTimeout</span><span class="params">()</span>；</span><br><span class="line"></span><br><span class="line">    <span class="keyword">default</span> <span class="type">boolean</span> <span class="title function_">isReadOnly</span><span class="params">()</span>；</span><br><span class="line"></span><br><span class="line">    <span class="keyword">default</span> String <span class="title function_">getName</span><span class="params">()</span>；</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<h3 id="2-1-4-事务状态-TransactionStatus"><a href="#2-1-4-事务状态-TransactionStatus" class="headerlink" title="2.1.4 事务状态 - TransactionStatus"></a>2.1.4 事务状态 - TransactionStatus</h3><p>PlatformTransactionManager#getTransaction()的方法得到的是TransactionStatus接口的一个实现，这个接口的内容如下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">TransactionStatus</span> <span class="keyword">extends</span> <span class="title class_">TransactionExecution</span>, SavepointManager, Flushable &#123;</span><br><span class="line">    <span class="comment">// 是否有保存点</span></span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">hasSavepoint</span><span class="params">()</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">TransactionExecution</span> &#123;</span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">isNewTransaction</span><span class="params">()</span>;</span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">setRollbackOnly</span><span class="params">()</span>;</span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">isRollbackOnly</span><span class="params">()</span>;</span><br><span class="line">    <span class="type">boolean</span> <span class="title function_">isCompleted</span><span class="params">()</span>;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">interface</span> <span class="title class_">SavepointManager</span> &#123;</span><br><span class="line">    Object <span class="title function_">createSavepoint</span><span class="params">()</span> <span class="keyword">throws</span> TransactionException;</span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">rollbackToSavepoint</span><span class="params">(Object savepoint)</span> <span class="keyword">throws</span> TransactionException;</span><br><span class="line">    <span class="keyword">void</span> <span class="title function_">releaseSavepoint</span><span class="params">(Object savepoint)</span> <span class="keyword">throws</span> TransactionException;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>TransactionStatus 描述的是一些处理事务提供简单的控制事务执行和查询事务状态的方法，在回滚或提交的时候需要应用对应的事务状态。</p>
-</div><h2 id="2-2-声明式事务源码分析"><a href="#2-2-声明式事务源码分析" class="headerlink" title="2.2 声明式事务源码分析"></a>2.2 声明式事务源码分析</h2><div class="story post-story"><p>声明式事务整体调用过程，可以抽象为以下两条线：</p>
+<h3 id="3-1-1-与-Redlock-无关的部分"><a href="#3-1-1-与-Redlock-无关的部分" class="headerlink" title="3.1.1 与 Redlock 无关的部分"></a>3.1.1 与 Redlock 无关的部分</h3><p>LTAI5tRRKsyJbH8S98zFhmdk<br>DQLWjyctDLLyHLGrjdDRRkyADL3VSl<br>Martin 给出了如下的时序图 Fig.1：</p>
+<p><img src="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647704258856unsafe-lock.png" class="lazyload" data-srcset="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647704258856unsafe-lock.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Fig.1. unsafe lock"></p>
+<p><em>Fig.1. 不安全的分布式锁时序图</em></p>
+<p>在上面的时序图中，假设锁服务本身是没有问题的，它总是能保证任一时刻最多只有一个客户端获得锁。<code>lease</code> 这个词等同于一个带有自动过期功能的锁。客户端 1 在获得锁之后发生了很长时间的 GC pause，在此期间，它获得的锁过期了，而客户端2获得了锁。当客户 1 从 GC pause 中恢复过来的时候，它不知道自己持有的锁已经过期了，它依然向共享资源（上图中是一个存储服务）发起了写数据请求，而这时锁实际上被客户端 2 持有，因此两个客户端的写请求就有可能冲突（锁的互斥作用失效了）。</p>
+<p>但是如果使用没有 GC 的语言来实现客户端呢？Martin 认为系统环境非常复杂，仍然有很多原因导致进程的 pause，比如虚存造成的缺页故障（page fault），再比如CPU资源的竞争等。即使不考虑进程 pause，网络延迟也会导致类似的结果。总结来说即是<strong>客户端在获得锁后进程长期阻塞导致锁过期</strong>会不会影响锁的安全性。</p>
+<p>Martin 给出的解决方案是 fencing token，简单来说是通过一个单调递增的数字来检查客户端访问共享资源时的顺序，其时序图如 Fig.2：</p>
+<p><img src="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647704280843fencing-tokens.png" class="lazyload" data-srcset="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647704280843fencing-tokens.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Fig.2. fencing tokens"></p>
+<p><em>Fig.2. Fencing Tokens 时序图</em></p>
+<p>Fig.2 中，客户端 1 先获取到锁，其 fencing token = 33。分布式锁失效，客户端 2 取得锁，其 fencing token = 34，操作共享资源。客户端 1 从 GC 中恢复，请求操作共享资源，存储服务发现其 token 小于 34，拒绝该操作，从而避免冲突。</p>
+<p><strong>Note</strong>：由于此处 Martin 并没有深入讲解 fencing token 的实现机制，因此笔者对此处也有很多疑问。比如两个客户端同时因为 GC 等原因阻塞进程，然而他们以相同的时间到达存储服务器，同时对资源进行操作，这也会破坏算法的安全性。</p>
+<h3 id="3-1-2-Redlock-部分"><a href="#3-1-2-Redlock-部分" class="headerlink" title="3.1.2 Redlock 部分"></a>3.1.2 Redlock 部分</h3><p>文章后半部分主要说明 Redlock 是一个同步模型，通过构造一些事件序列说明 Redlock 对系统计时过分依赖。首先构造的事件序列如下：</p>
+<ol>
+<li>客户端成功锁住实例 ABC，由于网络延迟等原因没有锁住 DE。</li>
+<li>节点 C 系统计时向前跳跃，客户端 1 在实例 C 上设置的 key 快速过期。</li>
+<li>客户端 2 成功锁住实例 CDE。</li>
+<li>客户端 1,2 都认为自己持有锁。</li>
+</ol>
+<p>上述情况的发生本质上是由于 Redis 的时间获取的是 Unix 时间，底层使用 <code>gettimeofday()</code>而不是单调时钟<code>clock_gettime()</code>，会受到时间不连续跳跃的影响（管理员手动修改时间、ntp 服务器同步时间等）。一旦系统时间不准确，算法的安全性也得不到保证。<br>随后 Martin 继续设想了一个更加极端的场景：</p>
+<ol>
+<li>客户端 1 请求锁定节点 ABCDE。</li>
+<li>当对客户端 1 的响应在进行中时，客户端 1 进入长时间 GC。</li>
+<li>所有 Redis 节点上的锁都会过期。</li>
+<li>客户端 2 获取节点 ABCDE 上的锁。</li>
+<li>客户端 1 完成 GC，并接收来自 Redis 节点的响应，表明它已成功获取锁（在进程暂停时，它们保存在客户端 1 的内核网络缓冲区中）。</li>
+<li>客户端 1 和 2 现在都相信他们持有锁。</li>
+</ol>
+<p>Martin 认为即使不考虑 GC 的影响，长时间的网络延迟也会导致上述情况的出现。实际上 antirez 在设计 Redlock 时就考虑了该问题，客户端 1 认为自己持有锁的必要条件之一就是真正有效时间（valid time）大于 0（antirez 在他的反驳文章中也对这个问题进行了反驳）。 </p>
+<p>我们知道好的分布式算法应该基于异步模型（Asynchronous Model），算法的安全性不应该依赖于任何计时假设。在异步模型中：进程可能 pause 任意长的时间，消息可能在网络中延迟任意长的时间，甚至丢失，系统时钟也可能以任意方式出错。一个好的分布式算法，这些因素不应该影响它的安全性（safety property），只可能影响到它的活性（liveness property），也就是说，即使在非常极端的情况下（比如系统时钟严重错误），算法顶多是不能在有限的时间内给出结果而已，而不应该给出错误的结果。显然按照此标准，Redlock 的安全性是达不到的。</p>
+<p>本文开头对分布式锁的应用场景的叙述就是 Kleppmann 的观点，他根据对 Redlock 的分析得出如下结论：</p>
 <ul>
-<li><p>使用代理模式，生成代理增强类。<br>这是 SpringBoot 自动配置的常规套路，此处不再赘述。</p>
-</li>
-<li><p>根据代理事务管理配置类，配置事务的织入，在业务方法前后进行环绕增强，增加一些事务的相关操作。例如获取事务属性、提交事务、回滚事务。主要介绍这条线上的实现过程。</p>
-</li>
+<li>效率：如果使用分布式锁的目的是为了提高系统效率，直接使用单实例的 Redis 进行锁操作，而不是使用多个 Redis 节点构成的集群，浪费资源。</li>
+<li>正确性：如果使用分布式锁的目的是保证正确性，那么不要使用 Redlock，建议使用类似 Zookeeper 的方案，或者是支持事务的数据库。</li>
 </ul>
-<h3 id="2-2-1-代理事务的配置-ProxyTransactionManagementConfiguration"><a href="#2-2-1-代理事务的配置-ProxyTransactionManagementConfiguration" class="headerlink" title="2.2.1 代理事务的配置 - ProxyTransactionManagementConfiguration"></a>2.2.1 代理事务的配置 - ProxyTransactionManagementConfiguration</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// org.springframework.transaction.annotation.ProxyTransactionManagementConfiguration.java</span></span><br><span class="line"></span><br><span class="line"><span class="meta">@Configuration(proxyBeanMethods = false)</span></span><br><span class="line"><span class="meta">@Role(BeanDefinition.ROLE_INFRASTRUCTURE)</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">ProxyTransactionManagementConfiguration</span> <span class="keyword">extends</span> <span class="title class_">AbstractTransactionManagementConfiguration</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean(name = TransactionManagementConfigUtils.TRANSACTION_ADVISOR_BEAN_NAME)</span></span><br><span class="line">    <span class="meta">@Role(BeanDefinition.ROLE_INFRASTRUCTURE)</span></span><br><span class="line">    <span class="comment">// 定义事务增强器</span></span><br><span class="line">    <span class="keyword">public</span> BeanFactoryTransactionAttributeSourceAdvisor <span class="title function_">transactionAdvisor</span><span class="params">(TransactionAttributeSource transactionAttributeSource, TransactionInterceptor transactionInterceptor)</span> &#123;</span><br><span class="line">        <span class="comment">// 定义 transactionAdvisor</span></span><br><span class="line">        <span class="type">BeanFactoryTransactionAttributeSourceAdvisor</span> <span class="variable">advisor</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">BeanFactoryTransactionAttributeSourceAdvisor</span>();</span><br><span class="line">        <span class="comment">// 设置事务属性</span></span><br><span class="line">		advisor.setTransactionAttributeSource(transactionAttributeSource);</span><br><span class="line">        <span class="comment">// 设置事务拦截器</span></span><br><span class="line">		advisor.setAdvice(transactionInterceptor);</span><br><span class="line">        <span class="comment">// 设置切面的优先顺序</span></span><br><span class="line">		<span class="keyword">if</span> (<span class="built_in">this</span>.enableTx != <span class="literal">null</span>) &#123;</span><br><span class="line">			advisor.setOrder(<span class="built_in">this</span>.enableTx.&lt;Integer&gt;getNumber(<span class="string">&quot;order&quot;</span>));</span><br><span class="line">		&#125;</span><br><span class="line">		<span class="keyword">return</span> advisor;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="meta">@Role(BeanDefinition.ROLE_INFRASTRUCTURE)</span></span><br><span class="line">    <span class="comment">// 定义基于注解的事务属性资源</span></span><br><span class="line">    <span class="keyword">public</span> TransactionAttributeSource <span class="title function_">transactionAttributeSource</span><span class="params">()</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Bean</span></span><br><span class="line">    <span class="meta">@Role(BeanDefinition.ROLE_INFRASTRUCTURE)</span></span><br><span class="line">    <span class="comment">// 定义事务拦截器</span></span><br><span class="line">    <span class="keyword">public</span> TransactionInterceptor <span class="title function_">transactionInterceptor</span><span class="params">(TransactionAttributeSource transactionAttributeSource)</span>;</span><br><span class="line"></span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>transactionAdvisor() 定义了一个 advisor，设置事务属性、设置事务拦截器 TransactionInterceptor、设置切入的顺序等。而声明式事务的核心就是事务拦截器。</p>
-<h3 id="2-2-1-事务拦截器——事务的入口"><a href="#2-2-1-事务拦截器——事务的入口" class="headerlink" title="2.2.1 事务拦截器——事务的入口"></a>2.2.1 事务拦截器——事务的入口</h3><p>TransactionInterceptor 是 Spring 实现声明式事务的拦截器，它实现了 AOP 联盟的 MethodInterceptor 接口，它的父类 TransactionAspectSupport 封装了一些用于实现事务切面对事务进行管理的基本代码。TransactionInterceptor 的继承关系如 Fig 2.2.1。</p>
-<p><img src="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647704074844transaction-interceptor.png" class="lazyload" data-srcset="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647704074844transaction-interceptor.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="transaction interceptor"></p>
-<p>Fig 2.2.1 TransactionInterceptor 类图 </p>
-<p>我们给一个bean的方法加上 @Transactional 注解后，Spring 容器给我们的是一个代理的bean。当我们对事务方法调用时，会进入 Spring 的 ReflectiveMethodInvocation#proceed 方法。这是AOP的主要实现，在进入业务方法前会调用各种方法拦截器，我们需要关注的拦截器是 org.springframework.transaction.interceptor.TransactionInterceptor。<br>TransactionInterceptor 的职责类似于一个“环绕切面”，在业务方法调用前根据情况开启事务，在业务方法调用完回到拦截器后进行善后清理。</p>
-<p>事务切面在源码中具体的实现方法是 TransactionAspectSupport#invokeWithinTransaction。事务切面关注的是TransactionInfo(TxInfo)，TxInfo是一个“非常大局观”的东西（里面啥都有：TxMgr, TxAttr, TxStatus还有前一次进入事务切面的TransactionInfo)。</p>
-<p>事务切面会调用 createTransactionIfNecessary 方法来创建事务并拿到一个 TxInfo（无论是否真的物理创建了一个事务）。如果事务块内的代码发生了异常，则会根据 TxInfo 里面的 TxAttr 配置的 rollback 规则看看这个异常是不是需要回滚，不需要回滚就尝试提交，否则就尝试回滚。如果未发生异常，则尝试提交。</p>
-<h4 id="TransactionAspectSupport-invokeWithinTransaction"><a href="#TransactionAspectSupport-invokeWithinTransaction" class="headerlink" title="TransactionAspectSupport#invokeWithinTransaction"></a>TransactionAspectSupport#invokeWithinTransaction</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> Object <span class="title function_">invokeWithinTransaction</span><span class="params">(Method method, Class&lt;?&gt; targetClass, <span class="keyword">final</span> InvocationCallback invocation)</span></span><br><span class="line">            <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// If the transaction attribute is null, the method is non-transactional.</span></span><br><span class="line">    <span class="type">TransactionAttributeSource</span> <span class="variable">tas</span> <span class="operator">=</span> getTransactionAttributeSource();</span><br><span class="line">    <span class="keyword">final</span> <span class="type">TransactionAttribute</span> <span class="variable">txAttr</span> <span class="operator">=</span> (tas != <span class="literal">null</span> ? tas.getTransactionAttribute(method, targetClass) : <span class="literal">null</span>);</span><br><span class="line">    <span class="keyword">final</span> <span class="type">TransactionManager</span> <span class="variable">tm</span> <span class="operator">=</span> determineTransactionManager(txAttr);</span><br><span class="line">    <span class="comment">// 响应式事务，主要代表为 RDBC2/MongoDB 的事务</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">this</span>.reactiveAdapterRegistry != <span class="literal">null</span> &amp;&amp; tm <span class="keyword">instanceof</span> ReactiveTransactionManager) &#123;</span><br><span class="line">        <span class="comment">// doSomeThing()</span></span><br><span class="line">    &#125;</span><br><span class="line">    <span class="type">PlatformTransactionManager</span> <span class="variable">ptm</span> <span class="operator">=</span> asPlatformTransactionManager(tm);</span><br><span class="line">    <span class="keyword">final</span> <span class="type">String</span> <span class="variable">joinpointIdentification</span> <span class="operator">=</span> methodIdentification(method, targetClass, txAttr);</span><br><span class="line">　　 <span class="comment">// 标准声明式事务：如果事务属性为空 或者 非回调偏向的事务管理器</span></span><br><span class="line">    <span class="keyword">if</span> (txAttr == <span class="literal">null</span> || !(tm <span class="keyword">instanceof</span> CallbackPreferringPlatformTransactionManager)) &#123;</span><br><span class="line">        <span class="comment">// Standard transaction demarcation with getTransaction and commit/rollback calls.</span></span><br><span class="line">        <span class="type">TransactionInfo</span> <span class="variable">txInfo</span> <span class="operator">=</span> createTransactionIfNecessary(tm, txAttr, joinpointIdentification);</span><br><span class="line">        <span class="type">Object</span> <span class="variable">retVal</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// 这里就是一个环绕增强，在这个proceed前后可以自己定义增强实现</span></span><br><span class="line">            <span class="comment">// 方法执行</span></span><br><span class="line">            retVal = invocation.proceedWithInvocation();</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span> (Throwable ex) &#123;</span><br><span class="line">            <span class="comment">// 根据事务定义的，该异常需要回滚就回滚，否则提交事务</span></span><br><span class="line">            completeTransactionAfterThrowing(txInfo, ex);</span><br><span class="line">            <span class="keyword">throw</span> ex;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="comment">// 清空当前事务信息，重置为老的</span></span><br><span class="line">            cleanupTransactionInfo(txInfo);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 返回结果之前提交事务</span></span><br><span class="line">        commitTransactionAfterReturning(txInfo);</span><br><span class="line">        <span class="keyword">return</span> retVal;</span><br><span class="line">    &#125;</span><br><span class="line">　　 <span class="comment">// 编程式事务：（回调偏向）</span></span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// doSomething()</span></span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>本节主要关注声明式事务，核心流程如下：</p>
-<ul>
-<li><p>createTransactionIfNecessary():如果有必要，创建事务</p>
-</li>
-<li><p>InvocationCallback的proceedWithInvocation()：InvocationCallback是父类的内部回调接口，子类中实现该接口供父类调用，子类TransactionInterceptor中invocation.proceed()。回调方法执行</p>
-</li>
-<li><p>异常回滚completeTransactionAfterThrowing()</p>
-</li>
-</ul>
-<h4 id="TransactionAspectSupport-createTransactionIfNecessary"><a href="#TransactionAspectSupport-createTransactionIfNecessary" class="headerlink" title="TransactionAspectSupport#createTransactionIfNecessary"></a>TransactionAspectSupport#createTransactionIfNecessary</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> TransactionInfo <span class="title function_">createTransactionIfNecessary</span><span class="params">(<span class="meta">@Nullable</span> PlatformTransactionManager tm,</span></span><br><span class="line"><span class="params">        <span class="meta">@Nullable</span> TransactionAttribute txAttr, <span class="keyword">final</span> String joinpointIdentification)</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="comment">// If no name specified, apply method identification as transaction name.</span></span><br><span class="line">    <span class="keyword">if</span> (txAttr != <span class="literal">null</span> &amp;&amp; txAttr.getName() == <span class="literal">null</span>) &#123;</span><br><span class="line">        txAttr = <span class="keyword">new</span> <span class="title class_">DelegatingTransactionAttribute</span>(txAttr) &#123;</span><br><span class="line">            <span class="meta">@Override</span></span><br><span class="line">            <span class="keyword">public</span> String <span class="title function_">getName</span><span class="params">()</span> &#123;</span><br><span class="line">                <span class="keyword">return</span> joinpointIdentification;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">TransactionStatus</span> <span class="variable">status</span> <span class="operator">=</span> <span class="literal">null</span>;</span><br><span class="line">    <span class="keyword">if</span> (txAttr != <span class="literal">null</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (tm != <span class="literal">null</span>) &#123;</span><br><span class="line">            status = tm.getTransaction(txAttr);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">if</span> (logger.isDebugEnabled()) &#123;</span><br><span class="line">                logger.debug(<span class="string">&quot;Skipping transactional joinpoint [&quot;</span> + joinpointIdentification +</span><br><span class="line">                        <span class="string">&quot;] because no transaction manager has been configured&quot;</span>);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">return</span> prepareTransactionInfo(tm, txAttr, joinpointIdentification, status);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>createTransactionIfNecessary() 的核心：</p>
-<ul>
-<li><p>getTransaction()：通过调用 PlatformTransactionManager#getTransaction 获取事务状态</p>
-</li>
-<li><p>prepareTransactionInfo()，构造一个 TransactionInfo 事务信息对象，绑定当前线程：ThreadLocal<TransactionInfo>。</p>
-</li>
-</ul>
-<h4 id="invocation-proceedWithInvocation-回调业务方法"><a href="#invocation-proceedWithInvocation-回调业务方法" class="headerlink" title="invocation.proceedWithInvocation() 回调业务方法"></a>invocation.proceedWithInvocation() 回调业务方法</h4><p>该方法实际调用 ReflectiveMethodInvocation#proceed() 方法，其源码如下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> Object <span class="title function_">proceed</span><span class="params">()</span> <span class="keyword">throws</span> Throwable &#123;</span><br><span class="line">    <span class="comment">// We start with an index of -1 and increment early.</span></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">this</span>.currentInterceptorIndex == <span class="built_in">this</span>.interceptorsAndDynamicMethodMatchers.size() - <span class="number">1</span>) &#123;</span><br><span class="line">        <span class="keyword">return</span> invokeJoinpoint();</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="type">Object</span> <span class="variable">interceptorOrInterceptionAdvice</span> <span class="operator">=</span></span><br><span class="line">            <span class="built_in">this</span>.interceptorsAndDynamicMethodMatchers.get(++<span class="built_in">this</span>.currentInterceptorIndex);</span><br><span class="line">    <span class="keyword">if</span> (interceptorOrInterceptionAdvice <span class="keyword">instanceof</span> InterceptorAndDynamicMethodMatcher) &#123;</span><br><span class="line">        <span class="comment">// Evaluate dynamic method matcher here: static part will already have</span></span><br><span class="line">        <span class="comment">// been evaluated and found to match.</span></span><br><span class="line">        <span class="type">InterceptorAndDynamicMethodMatcher</span> <span class="variable">dm</span> <span class="operator">=</span></span><br><span class="line">                (InterceptorAndDynamicMethodMatcher) interceptorOrInterceptionAdvice;</span><br><span class="line">        Class&lt;?&gt; targetClass = (<span class="built_in">this</span>.targetClass != <span class="literal">null</span> ? <span class="built_in">this</span>.targetClass : <span class="built_in">this</span>.method.getDeclaringClass());</span><br><span class="line">        <span class="keyword">if</span> (dm.methodMatcher.matches(<span class="built_in">this</span>.method, targetClass, <span class="built_in">this</span>.arguments)) &#123;</span><br><span class="line">            <span class="keyword">return</span> dm.interceptor.invoke(<span class="built_in">this</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// Dynamic matching failed.</span></span><br><span class="line">            <span class="comment">// Skip this interceptor and invoke the next in the chain.</span></span><br><span class="line">            <span class="keyword">return</span> proceed();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// It&#x27;s an interceptor, so we just invoke it: The pointcut will have</span></span><br><span class="line">        <span class="comment">// been evaluated statically before this object was constructed.</span></span><br><span class="line">        <span class="keyword">return</span> ((MethodInterceptor) interceptorOrInterceptionAdvice).invoke(<span class="built_in">this</span>);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-
-<p>该方法进行一些动态校验后，拦截器使用 invoke() 方法调用了目标业务方法。</p>
-<h4 id="TransactionAspectSupport-completeTransactionAfterThrowing-amp-amp-completeTransactionAfterReturning"><a href="#TransactionAspectSupport-completeTransactionAfterThrowing-amp-amp-completeTransactionAfterReturning" class="headerlink" title="TransactionAspectSupport#completeTransactionAfterThrowing() &amp;&amp; completeTransactionAfterReturning()"></a>TransactionAspectSupport#completeTransactionAfterThrowing() &amp;&amp; completeTransactionAfterReturning()</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">protected</span> <span class="keyword">void</span> <span class="title function_">completeTransactionAfterThrowing</span><span class="params">(<span class="meta">@Nullable</span> TransactionInfo txInfo, Throwable ex)</span> &#123;</span><br><span class="line">    <span class="comment">// 对事务属性进行检查，捕获异常后是否需要进行回滚</span></span><br><span class="line">    <span class="keyword">if</span> (txInfo != <span class="literal">null</span> &amp;&amp; txInfo.getTransactionStatus() != <span class="literal">null</span>) &#123;</span><br><span class="line">        <span class="keyword">if</span> (logger.isTraceEnabled()) &#123;</span><br><span class="line">            logger.trace(<span class="string">&quot;Completing transaction for [&quot;</span> + txInfo.getJoinpointIdentification() +</span><br><span class="line">                    <span class="string">&quot;] after exception: &quot;</span> + ex);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">if</span> (txInfo.transactionAttribute != <span class="literal">null</span> &amp;&amp; txInfo.transactionAttribute.rollbackOn(ex)) &#123;</span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                txInfo.getTransactionManager().rollback(txInfo.getTransactionStatus());</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">catch</span> (TransactionSystemException ex2) &#123;</span><br><span class="line">                logger.error(<span class="string">&quot;Application exception overridden by rollback exception&quot;</span>, ex);</span><br><span class="line">                ex2.initApplicationException(ex);</span><br><span class="line">                <span class="keyword">throw</span> ex2;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">catch</span> (RuntimeException | Error ex2) &#123;</span><br><span class="line">                logger.error(<span class="string">&quot;Application exception overridden by rollback exception&quot;</span>, ex);</span><br><span class="line">                <span class="keyword">throw</span> ex2;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="comment">// We don&#x27;t roll back on this exception.</span></span><br><span class="line">            <span class="comment">// Will still roll back if TransactionStatus.isRollbackOnly() is true.</span></span><br><span class="line">            <span class="keyword">try</span> &#123;</span><br><span class="line">                txInfo.getTransactionManager().commit(txInfo.getTransactionStatus());</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">catch</span> (TransactionSystemException ex2) &#123;</span><br><span class="line">                logger.error(<span class="string">&quot;Application exception overridden by commit exception&quot;</span>, ex);</span><br><span class="line">                ex2.initApplicationException(ex);</span><br><span class="line">                <span class="keyword">throw</span> ex2;</span><br><span class="line">            &#125;</span><br><span class="line">            <span class="keyword">catch</span> (RuntimeException | Error ex2) &#123;</span><br><span class="line">                logger.error(<span class="string">&quot;Application exception overridden by commit exception&quot;</span>, ex);</span><br><span class="line">                <span class="keyword">throw</span> ex2;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br></pre></td></tr></table></figure>
-
-<p>该方法最终调用了 AbstractPlatformTransactionManager#rollback() 方法，与之相似的是，completeTransactionAfterReturning() 最终调用了 commit()。</p>
-<h4 id="ThreadLocal-的使用"><a href="#ThreadLocal-的使用" class="headerlink" title="ThreadLocal 的使用"></a>ThreadLocal 的使用</h4><p>ThreadLocal<TransactionInfo> 使业务代码或者其他切面中，可以拿到 TxInfo，也能拿到 TxStatus。拿到 TxStatus 我们就可以调用 setRollbackOnly 来打标以手动控制事务必须回滚。基于此声明式就可以实现事务的嵌套。</p>
-<p>TransactionSynchronizationManager 是 Spring 事务代码中对 ThreadLocal 使用最多的类，目前它内部含有 6 个 ThreadLocal，分别是：</p>
-<ul>
-<li><p>resources<br>类型为 Map&lt;Object, Object&gt; 用于保存事务相关资源，比如我们常用的DataSourceTransactionManager会在开启物理事务的时候把 &lt;DataSource, ConnectionHolder&gt; 绑定到线程。<br>这样在事务作用的业务代码中可以通过 Spring 的 DataSourceUtils 拿到绑定到线程的 ConnectionHolder 中的 Connection。事实上对于 MyBatis 来说与 Spring 集成时就是这样拿的。</p>
-</li>
-<li><p>synchronizations<br>类型为 Set<TransactionSynchronization> 用于保存 transaction synchronization，这个可以理解为是回调钩子对象，内部含有 beforeCommitm，afterCommit，beforeCompletion等钩子方法。<br>我们自己如果需要的话也可以在业务方法或者切面中注册一些 transaction synchronization 对象用于追踪事务生命周期做一些自定义的事情。</p>
-</li>
-<li><p>currentTransactionName<br>当前事务名</p>
-</li>
-<li><p>currentTransactionReadOnly<br>当前事务是否只读</p>
-</li>
-<li><p>currentTransactionIsolationLevel<br>当前事务隔离级别</p>
-</li>
-<li><p>actualTransactionActive<br>是否存在物理事务，比如传播行为为 NOT_SUPPORTED 时就会是 false。</p>
-</li>
-</ul>
-</div><h2 id="2-3-编程式事务管理源码分析"><a href="#2-3-编程式事务管理源码分析" class="headerlink" title="2.3 编程式事务管理源码分析"></a>2.3 编程式事务管理源码分析</h2><div class="story post-story"><p>Spring 提供了模板类 org.springframework.transaction.support.TransactionTemplate 实现编程式事务管理，其类图如 Fig 2.3.1</p>
-<p><img src="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647704108859transaction-template-diagram.png" class="lazyload" data-srcset="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647704108859transaction-template-diagram.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="transaction-template-diagram"></p>
-<p>Fig 2.3.1 TransactionTemplate 类图</p>
-<p>源码如下：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">TransactionTemplate</span> <span class="keyword">extends</span> <span class="title class_">DefaultTransactionDefinition</span></span><br><span class="line">		<span class="keyword">implements</span> <span class="title class_">TransactionOperations</span>, InitializingBean &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">TransactionTemplate</span><span class="params">()</span>;</span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">TransactionTemplate</span><span class="params">(PlatformTransactionManager transactionManager)</span>;</span><br><span class="line">    <span class="keyword">public</span> <span class="title function_">TransactionTemplate</span><span class="params">(PlatformTransactionManager transactionManager, TransactionDefinition transactionDefinition)</span>;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">afterPropertiesSet</span><span class="params">()</span> &#123;</span><br><span class="line">        <span class="keyword">if</span> (<span class="built_in">this</span>.transactionManager == <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalArgumentException</span>(<span class="string">&quot;Property &#x27;transactionManager&#x27; is required&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="meta">@Override</span></span><br><span class="line">    <span class="meta">@Nullable</span></span><br><span class="line">    <span class="keyword">public</span> &lt;T&gt; T <span class="title function_">execute</span><span class="params">(TransactionCallback&lt;T&gt; action)</span> <span class="keyword">throws</span> TransactionException;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">rollbackOnException</span><span class="params">(TransactionStatus status, Throwable ex)</span> <span class="keyword">throws</span> TransactionException;</span><br><span class="line">&#125;</span><br><span class="line"></span><br></pre></td></tr></table></figure>
-<p>TransactionTemplate 实现了 TransactionOperations 和 InitializingBean，前者用来执行事务的回调方法，后者执行 bean 加载完毕后的方法。</p>
-<p>execute() 源码如下： </p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> &lt;T&gt; T <span class="title function_">execute</span><span class="params">(TransactionCallback&lt;T&gt; action)</span> <span class="keyword">throws</span> TransactionException &#123;</span><br><span class="line">    Assert.state(<span class="built_in">this</span>.transactionManager != <span class="literal">null</span>, <span class="string">&quot;No PlatformTransactionManager set&quot;</span>);</span><br><span class="line"></span><br><span class="line">    <span class="keyword">if</span> (<span class="built_in">this</span>.transactionManager <span class="keyword">instanceof</span> CallbackPreferringPlatformTransactionManager) &#123;</span><br><span class="line">        <span class="keyword">return</span> ((CallbackPreferringPlatformTransactionManager) <span class="built_in">this</span>.transactionManager).execute(<span class="built_in">this</span>, action);</span><br><span class="line">    &#125;</span><br><span class="line">    <span class="keyword">else</span> &#123;</span><br><span class="line">        <span class="comment">// 1. 获取事务状态</span></span><br><span class="line">        <span class="type">TransactionStatus</span> <span class="variable">status</span> <span class="operator">=</span> <span class="built_in">this</span>.transactionManager.getTransaction(<span class="built_in">this</span>);</span><br><span class="line">        T result;</span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            <span class="comment">// 2. 执行业务逻辑</span></span><br><span class="line">            result = action.doInTransaction(status);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 3. 捕获异常/错误后进行回滚</span></span><br><span class="line">        <span class="keyword">catch</span> (RuntimeException | Error ex) &#123;</span><br><span class="line">            <span class="comment">// Transactional code threw application exception -&gt; rollback</span></span><br><span class="line">            rollbackOnException(status, ex);</span><br><span class="line">            <span class="keyword">throw</span> ex;</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="keyword">catch</span> (Throwable ex) &#123;</span><br><span class="line">            <span class="comment">// Transactional code threw unexpected exception -&gt; rollback</span></span><br><span class="line">            rollbackOnException(status, ex);</span><br><span class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">UndeclaredThrowableException</span>(ex, <span class="string">&quot;TransactionCallback threw undeclared checked exception&quot;</span>);</span><br><span class="line">        &#125;</span><br><span class="line">        <span class="comment">// 4. 事务提交</span></span><br><span class="line">        <span class="built_in">this</span>.transactionManager.commit(status);</span><br><span class="line">        <span class="keyword">return</span> result;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
-<p>execute() 主要步骤：</p>
-<ul>
-<li><p>getTransaction() 获取事务。</p>
-</li>
-<li><p>doInTransaction() 执行业务逻辑，这里就是用户自定义的业务代码。如果是没有返回值的，就是doInTransactionWithoutResult()。</p>
-</li>
-<li><p>commit()事务提交：调用 AbstractPlatformTransactionManager#commit()；rollbackOnException() 异常回滚：调用 AbstractPlatformTransactionManager#rollback()。</p>
-</li>
-</ul>
-</div><h2 id="2-4-AbstractPlatformTransactionManager-源码阅读"><a href="#2-4-AbstractPlatformTransactionManager-源码阅读" class="headerlink" title="2.4 AbstractPlatformTransactionManager 源码阅读"></a>2.4 AbstractPlatformTransactionManager 源码阅读</h2><div class="story post-story"><p>不管是编程式事务，还是声明式事务，最终源码都是调用事务管理器的 PlatformTransactionManager 接口的3个方法：</p>
-<ul>
-<li>getTransaction()</li>
-<li>commit()</li>
-<li>rollback()</li>
-</ul>
-<p>不同的事务管理器提供了以上三个接口的不同实现，笔者主要阅读了 Spring 提供的 AbstractPlatformTransactionManager。</p>
-<h3 id="2-4-1-getTransaction"><a href="#2-4-1-getTransaction" class="headerlink" title="2.4.1 getTransaction()"></a>2.4.1 getTransaction()</h3><h3 id="2-4-2-commit"><a href="#2-4-2-commit" class="headerlink" title="2.4.2 commit()"></a>2.4.2 commit()</h3><h3 id="2-4-3-rollback"><a href="#2-4-3-rollback" class="headerlink" title="2.4.3 rollback()"></a>2.4.3 rollback()</h3><h1 id="3-注解-Transaction-利弊分析"><a href="#3-注解-Transaction-利弊分析" class="headerlink" title="3. 注解 @Transaction 利弊分析"></a>3. 注解 @Transaction 利弊分析</h1><p>正如前文介绍所说，声明式事务管理，对业务代码没有侵入性，我们可以专注于业务逻辑。然而声明式真的有这么好么？</p>
-</div><h2 id="3-1-声明式事务的粒度"><a href="#3-1-声明式事务的粒度" class="headerlink" title="3.1 声明式事务的粒度"></a>3.1 声明式事务的粒度</h2><div class="story post-story"><ul>
-<li><p>声明式事务的最小粒度作用在方法上，如果想要给一部分代码块增加事务的话，那就需要把这个部分代码块单独独立出来作为一个方法。</p>
-</li>
-<li><p>声明式事务容易被开发者忽略<br>如果开发者没有注意到一个方法是被事务嵌套的，那么就可能会再方法中加入一些如RPC远程调用、消息发送、缓存更新、文件写入等操作，这会导致两个问题：</p>
-<ul>
-<li>这些操作自身是无法回滚的，这就会导致数据的不一致。</li>
-<li>在事务中有远程调用，就会拉长整个事务。那么久会导致本事务的数据库连接一直被占用，那么如果类似操作过多，就会导致数据库连接池耗尽。</li>
-</ul>
-</li>
-</ul>
-</div><h2 id="3-2-声明式事务拦截器失效"><a href="#3-2-声明式事务拦截器失效" class="headerlink" title="3.2 声明式事务拦截器失效"></a>3.2 声明式事务拦截器失效</h2><div class="story post-story"><p>以下几种场景就可能导致声明式事务失效：</p>
-<ul>
-<li>@Transactional 应用在非 public 修饰的方法上</li>
-<li>@Transactional 注解属性 propagation 设置错误</li>
-<li>@Transactional 注解属性 rollbackFor 设置错误</li>
-<li>同一个类中方法调用，导致 @Transactional 失效</li>
-<li>异常被 catch 捕获导致 @Transactional 失效</li>
-<li>数据库引擎不支持事务</li>
-</ul>
-<p>因为Spring的事务是基于AOP实现的，但是在代码中，有时候我们会有很多切面，不同的切面可能会来处理不同的事情，多个切面之间可能会有相互影响。比如目前我们的错误日志打印类，就是通过 AOP 对异常进行捕获。如果不设置 @Transactional 切面和日志打印切面的优先级，将会使事务失效。</p>
-</div><h2 id="3-3-阿里规约"><a href="#3-3-阿里规约" class="headerlink" title="3.3 阿里规约"></a>3.3 阿里规约</h2><div class="story post-story"><blockquote>
-<p>【参考】@Transactional事务不要滥用。事务会影响数据库的QPS，另外使用事务的地方需要考虑各方面的回滚方案，包括缓存回滚、搜索引擎回滚、消息补偿、统计修正等</p>
+<p>以及他认为选择 Redlock 是 <code>poor choice</code>，因为它 <code>neither fish nor fowl（非鱼非驴）</code>。</p>
+</div><h2 id="3-2-antirez-的反驳"><a href="#3-2-antirez-的反驳" class="headerlink" title="3.2 antirez 的反驳"></a>3.2 antirez 的反驳</h2><div class="story post-story"><p>antirez 也简单概括了 Kleppmann 的观点，即文章的前半部分和后半部分。他也就这两方面进行了反驳。</p>
+<h3 id="3-2-1-fencing-token-机制"><a href="#3-2-1-fencing-token-机制" class="headerlink" title="3.2.1 fencing token 机制"></a>3.2.1 fencing token 机制</h3><ol>
+<li><p>antirez 认为既然锁失效的情况下，fencing token 机制就能保证多进程对共享资源进行安全地访问，那为什么还需要分布式锁呢？原文如下：</p>
+<blockquote>
+<p>It is not clear why you would use a lock with strong properties at all if you can resolve races in a different way.</p>
 </blockquote>
-<h1 id="5-Conclution"><a href="#5-Conclution" class="headerlink" title="5. Conclution"></a>5. Conclution</h1><ul>
-<li><p>设计模式：</p>
+</li>
+<li><p>如果使用一个单调递增的 token，那么共享资源就是一个线性存储系统。然而大多数场景下，对共享资源写入并不是线性化的。Redlock 虽然没有提供单调递增的 fencing token，但是提供了唯一的随机字符串（unique token），也可以达到同样的效果。原文中提到，可以使用 unique token 完成一个 CAS操作：假设存在一个共享资源 X</p>
+</li>
+</ol>
+<blockquote>
+<ol>
+<li>设置 X.curlock = token。</li>
+<li>读出资源 X 以及附带的 curlock。</li>
+<li>按照”write-if-currlock == token”的逻辑，修改资源X的值。</li>
+</ol>
+</blockquote>
+<p>同时 antirez 认为第一部分的批评适用于所有具有超时释放功能且没有提供单调递增 token 的分布式锁。</p>
+<h3 id="3-2-2-系统模型"><a href="#3-2-2-系统模型" class="headerlink" title="3.2.2 系统模型"></a>3.2.2 系统模型</h3><p>Kleppmann 认为 Redlock 失败的情况主要有以下两种：</p>
 <ul>
-<li>模板模式：编程式事务源码</li>
-<li>代理模式：声明式事务源码</li>
+<li>系统计时发生不连续跳跃</li>
+<li>长时间的 GC 或长时间的网络延迟（虽然造成两种情况的成因不同，但是笔者认为逻辑上对分布式锁系统造成的影响是类似的，即客户端认为他持有该锁时，锁在 Redis 节点处已经失效）。</li>
 </ul>
+<p>对于第一种情况，Kleppmann 举了两个系统时钟跳跃的例子：</p>
+<ol>
+<li>管理员手动调整</li>
+<li>NTP 服务器调整</li>
+</ol>
+<p>antirez 认为 1 是不可避免的，如果有人对 raft 日志进行修改，那么 raft 也无法正常工作。对于 2 可以通过配置 nptd 慢慢修改时间，而不是大跨度的修改系统时间。Redlock 由于使用相对时间，即使存在误差，在实际情况中也是可以接受的。</p>
+<p>对于后一种情况来说，antirez 在设计 Redlock 时已经考虑到了，并设置了真正有效时间 valid time 作为必要条件之一。他在博客中也重新分析了这个问题，我们先回顾一下客户端<a href="#2.2.1">请求锁</a>的过程。</p>
+<p>我们可以知道由于 valid time 的设置，在第一步和第三步之间发生 GC 或是网络延迟都不会影响 Redlock 的安全性，都能被第四步检测出来。只有发生在第三步之后的 GC 或者延迟会影响锁服务的安全性。antirez 有一段比较有意思的论述：</p>
+<blockquote>
+<p>The delay can only happen after steps 3, resulting into the lock to be considered ok while actually expired, that is, we are back at the first problem Martin identified of distributed locks where the client fails to stop working to the shared resource before the lock validity expires. Let me tell again how this problem is common with <strong>all the distributed locks implementations</strong>, and how the token as a solution is both unrealistic and can be used with Redlock as well.<br>译文：只有发生在第三步之后的延时会导致，客户端认为锁服务是正常的但实际上已经过期。我们回到 Martin 的第一个问题，即是客户端没有在锁失效之前完成对共享资源的操作，这是 <strong>所有分布式锁（这里特指带自动过期功能的锁）</strong> 的共同问题。而且基于 token 这种方案是不切实际的，但是也能和 Redlock 一起使用。</p>
+</blockquote>
+<p>笔者认为只要认同 antirez 对时钟的论断，他的分析看起来是无懈可击的。</p>
+<h1 id="4-Redission-简介"><a href="#4-Redission-简介" class="headerlink" title="4. Redission 简介"></a>4. Redission 简介</h1><p>Redisson是一个在Redis的基础上实现的Java驻内存数据网格（In-Memory Data Grid）。它不仅提供了一系列的分布式的Java常用对象，还提供了许多分布式服务。其中包括(<code>BitSet</code>, <code>Set</code>, <code>Multimap</code>, <code>SortedSet</code>, <code>Map</code>, <code>List</code>, <code>Queue</code>, <code>BlockingQueue</code>, <code>Deque</code>, <code>BlockingDeque</code>, <code>Semaphore</code>, <code>Lock</code>, <code>AtomicLong</code>, <code>CountDownLatch</code>, <code>Publish / Subscribe</code>, <code>Bloom filter</code>, <code>Remote service</code>, <code>Spring cache</code>, <code>Executor service</code>, <code>Live Object service</code>, <code>Scheduler service</code>) Redisson提供了使用Redis的最简单和最便捷的方法。本文主要介绍分布式锁（Distributed lock）中可重入锁（Reentrant Lock）和 Redlock 的实现。</p>
+</div><h2 id="4-1-Reentrant-Lock-实现"><a href="#4-1-Reentrant-Lock-实现" class="headerlink" title="4.1 Reentrant Lock 实现"></a>4.1 Reentrant Lock 实现</h2><div class="story post-story"><p><a target="_blank" rel="noopener" href="https://github.com/redisson/redisson/wiki/8.-%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%92%8C%E5%90%8C%E6%AD%A5%E5%99%A8">官方 WIKI</a>说明可重入锁 <code>RLock</code> Java对象实现了 <code>java.util.concurrent.locks.Lock</code> 接口，用法类似 juc 中的 <code>lock</code>。</p>
+<p>通过下面的例程简单说明一下可重入锁的实现。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">public</span> <span class="keyword">class</span> <span class="title class_">App</span> &#123;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title function_">main</span><span class="params">(String[] args)</span> &#123;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 1. Redis 配置</span></span><br><span class="line">        <span class="type">Config</span> <span class="variable">config</span> <span class="operator">=</span> <span class="keyword">new</span> <span class="title class_">Config</span>();</span><br><span class="line">        config.useClusterServers().addNodeAddress(<span class="string">&quot;redis://127.0.0.1:7181&quot;</span>);</span><br><span class="line">        <span class="comment">// 2. 构造 RedissionClient</span></span><br><span class="line">        <span class="type">RedissonClient</span> <span class="variable">redisson</span> <span class="operator">=</span> Redisson.create(config);</span><br><span class="line">        <span class="comment">// 3. 获取锁实例</span></span><br><span class="line">        <span class="type">RLock</span> <span class="variable">rLock</span> <span class="operator">=</span> redisson.getLock(<span class="string">&quot;reentrant lock test&quot;</span>);</span><br><span class="line">        <span class="comment">// 4. 获取分布式锁</span></span><br><span class="line">        rLock.lock();</span><br><span class="line"></span><br><span class="line">        <span class="keyword">try</span> &#123;</span><br><span class="line">            System.out.println(<span class="string">&quot;reentrant lock test&quot;</span>);</span><br><span class="line">        &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">            <span class="comment">// 5. 释放锁</span></span><br><span class="line">            rLock.unlock();</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="getLock-方法"><a href="#getLock-方法" class="headerlink" title="getLock() 方法"></a>getLock() 方法</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line"><span class="comment">// RedissionLock.java</span></span><br><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> RLock <span class="title function_">getLock</span><span class="params">(String name)</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> <span class="keyword">new</span> <span class="title class_">RedissonLock</span>(commandExecutor, name);</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+<p><code>RLock</code> 是一个继承自 <code>java.util.concurrent.locks.Lock</code> 的接口，返回了一个 <code>RedissonLock</code> 实例。</p>
+<p>RedissonLock 的构造参数是：</p>
+<ul>
+<li>commandExecutor：是与 Redis 节点进行通信的具体实现。主要通过 <code>eval</code> 命令执行 <code>lua</code> 脚本来实现，此处不展开讲解。</li>
+<li>name：锁的全局名称，即是锁在 Redis 节点中的 key。</li>
+</ul>
+<h3 id="lock-方法"><a href="#lock-方法" class="headerlink" title="lock() 方法"></a>lock() 方法</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br><span class="line">49</span><br><span class="line">50</span><br><span class="line">51</span><br><span class="line">52</span><br><span class="line">53</span><br><span class="line">54</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">lock</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        lock(-<span class="number">1</span>, <span class="literal">null</span>, <span class="literal">false</span>);</span><br><span class="line">    &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">        <span class="keyword">throw</span> <span class="keyword">new</span> <span class="title class_">IllegalStateException</span>();</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> <span class="keyword">void</span> <span class="title function_">lock</span><span class="params">(<span class="type">long</span> leaseTime, TimeUnit unit, <span class="type">boolean</span> interruptibly)</span> <span class="keyword">throws</span> InterruptedException &#123;</span><br><span class="line">    <span class="type">long</span> <span class="variable">threadId</span> <span class="operator">=</span> Thread.currentThread().getId();</span><br><span class="line">    <span class="comment">// 1. 尝试获取锁</span></span><br><span class="line">    <span class="type">Long</span> <span class="variable">ttl</span> <span class="operator">=</span> tryAcquire(-<span class="number">1</span>, leaseTime, unit, threadId);</span><br><span class="line">    <span class="comment">// 2. 订阅锁</span></span><br><span class="line">    RFuture&lt;RedissonLockEntry&gt; future = subscribe(threadId);</span><br><span class="line">    <span class="comment">// 3. 中断处理</span></span><br><span class="line">    <span class="keyword">if</span> (interruptibly) &#123;</span><br><span class="line">        commandExecutor.syncSubscriptionInterrupted(future);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        commandExecutor.syncSubscription(future);</span><br><span class="line">    &#125;</span><br><span class="line"></span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        <span class="keyword">while</span> (<span class="literal">true</span>) &#123;</span><br><span class="line">            <span class="comment">// 4. 重新尝试获取锁</span></span><br><span class="line">            ttl = tryAcquire(-<span class="number">1</span>, leaseTime, unit, threadId);</span><br><span class="line">            <span class="comment">// 5. lock acquired 锁获取成功</span></span><br><span class="line">            <span class="keyword">if</span> (ttl == <span class="literal">null</span>) &#123;</span><br><span class="line">                <span class="keyword">break</span>;</span><br><span class="line">            &#125;</span><br><span class="line"></span><br><span class="line">            <span class="comment">// 6. waiting for message 等待锁释放</span></span><br><span class="line">            <span class="keyword">if</span> (ttl &gt;= <span class="number">0</span>) &#123;</span><br><span class="line">                <span class="keyword">try</span> &#123;</span><br><span class="line">                    future.getNow().getLatch().tryAcquire(ttl, TimeUnit.MILLISECONDS);</span><br><span class="line">                &#125; <span class="keyword">catch</span> (InterruptedException e) &#123;</span><br><span class="line">                    <span class="keyword">if</span> (interruptibly) &#123;</span><br><span class="line">                        <span class="keyword">throw</span> e;</span><br><span class="line">                    &#125;</span><br><span class="line">                    future.getNow().getLatch().tryAcquire(ttl, TimeUnit.MILLISECONDS);</span><br><span class="line">                &#125;</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="keyword">if</span> (interruptibly) &#123;</span><br><span class="line">                    future.getNow().getLatch().acquire();</span><br><span class="line">                &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                    future.getNow().getLatch().acquireUninterruptibly();</span><br><span class="line">                &#125;</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125; <span class="keyword">finally</span> &#123;</span><br><span class="line">        <span class="comment">// 7. 取消订阅</span></span><br><span class="line">        unsubscribe(future, threadId);</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="tryAquire-方法"><a href="#tryAquire-方法" class="headerlink" title="tryAquire() 方法"></a>tryAquire() 方法</h3><p>重点分析 <code>tryAquire()</code> 方法。</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br><span class="line">31</span><br><span class="line">32</span><br><span class="line">33</span><br><span class="line">34</span><br><span class="line">35</span><br><span class="line">36</span><br><span class="line">37</span><br><span class="line">38</span><br><span class="line">39</span><br><span class="line">40</span><br><span class="line">41</span><br><span class="line">42</span><br><span class="line">43</span><br><span class="line">44</span><br><span class="line">45</span><br><span class="line">46</span><br><span class="line">47</span><br><span class="line">48</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">private</span> Long <span class="title function_">tryAcquire</span><span class="params">(<span class="type">long</span> waitTime, <span class="type">long</span> leaseTime, TimeUnit unit, <span class="type">long</span> threadId)</span> &#123;</span><br><span class="line">    <span class="comment">// 1. 异步执行</span></span><br><span class="line">    <span class="keyword">return</span> get(tryAcquireAsync(waitTime, leaseTime, unit, threadId));</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">private</span> &lt;T&gt; RFuture&lt;Long&gt; <span class="title function_">tryAcquireAsync</span><span class="params">(<span class="type">long</span> waitTime, <span class="type">long</span> leaseTime, TimeUnit unit, <span class="type">long</span> threadId)</span> &#123;</span><br><span class="line">    RFuture&lt;Long&gt; ttlRemainingFuture;</span><br><span class="line">    <span class="comment">// 2. 根据有效时间尝试异步加锁</span></span><br><span class="line">    <span class="keyword">if</span> (leaseTime != -<span class="number">1</span>) &#123;</span><br><span class="line">        ttlRemainingFuture = tryLockInnerAsync(waitTime, leaseTime, unit, threadId, RedisCommands.EVAL_LONG);</span><br><span class="line">    &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">        ttlRemainingFuture = tryLockInnerAsync(waitTime, internalLockLeaseTime,</span><br><span class="line">                TimeUnit.MILLISECONDS, threadId, RedisCommands.EVAL_LONG);</span><br><span class="line">    &#125;</span><br><span class="line">    ttlRemainingFuture.onComplete((ttlRemaining, e) -&gt; &#123;</span><br><span class="line">        <span class="keyword">if</span> (e != <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">return</span>;</span><br><span class="line">        &#125;</span><br><span class="line"></span><br><span class="line">        <span class="comment">// 3. lock acquired 锁获得成功</span></span><br><span class="line">        <span class="keyword">if</span> (ttlRemaining == <span class="literal">null</span>) &#123;</span><br><span class="line">            <span class="keyword">if</span> (leaseTime != -<span class="number">1</span>) &#123;</span><br><span class="line">                internalLockLeaseTime = unit.toMillis(leaseTime);</span><br><span class="line">            &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">                <span class="comment">// 4. 锁过期时间刷新任务调度</span></span><br><span class="line">                scheduleExpirationRenewal(threadId);</span><br><span class="line">            &#125;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;);</span><br><span class="line">    <span class="keyword">return</span> ttlRemainingFuture;  </span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line">&lt;T&gt; RFuture&lt;T&gt; <span class="title function_">tryLockInnerAsync</span><span class="params">(<span class="type">long</span> waitTime, <span class="type">long</span> leaseTime, TimeUnit unit, <span class="type">long</span> threadId, RedisStrictCommand&lt;T&gt; command)</span> &#123;</span><br><span class="line">    <span class="comment">// 5. 使用 eval 命令执行 lua 脚本获取锁</span></span><br><span class="line">    <span class="keyword">return</span> evalWriteAsync(getRawName(), LongCodec.INSTANCE, command,</span><br><span class="line">            <span class="string">&quot;if (redis.call(&#x27;exists&#x27;, KEYS[1]) == 0) then &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;redis.call(&#x27;hincrby&#x27;, KEYS[1], ARGV[2], 1); &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;redis.call(&#x27;pexpire&#x27;, KEYS[1], ARGV[1]); &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;return nil; &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;end; &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;if (redis.call(&#x27;hexists&#x27;, KEYS[1], ARGV[2]) == 1) then &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;redis.call(&#x27;hincrby&#x27;, KEYS[1], ARGV[2], 1); &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;redis.call(&#x27;pexpire&#x27;, KEYS[1], ARGV[1]); &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;return nil; &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;end; &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;return redis.call(&#x27;pttl&#x27;, KEYS[1]);&quot;</span>,</span><br><span class="line">            Collections.singletonList(getRawName()), unit.toMillis(leaseTime), getLockName(threadId));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+<h3 id="unlock-方法"><a href="#unlock-方法" class="headerlink" title="unlock() 方法"></a>unlock() 方法</h3><figure class="highlight java"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br><span class="line">24</span><br><span class="line">25</span><br><span class="line">26</span><br><span class="line">27</span><br><span class="line">28</span><br><span class="line">29</span><br><span class="line">30</span><br></pre></td><td class="code"><pre><span class="line"><span class="meta">@Override</span></span><br><span class="line"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title function_">unlock</span><span class="params">()</span> &#123;</span><br><span class="line">    <span class="keyword">try</span> &#123;</span><br><span class="line">        get(unlockAsync(Thread.currentThread().getId()));</span><br><span class="line">    &#125; <span class="keyword">catch</span> (RedisException e) &#123;</span><br><span class="line">        <span class="keyword">if</span> (e.getCause() <span class="keyword">instanceof</span> IllegalMonitorStateException) &#123;</span><br><span class="line">            <span class="keyword">throw</span> (IllegalMonitorStateException) e.getCause();</span><br><span class="line">        &#125; <span class="keyword">else</span> &#123;</span><br><span class="line">            <span class="keyword">throw</span> e;</span><br><span class="line">        &#125;</span><br><span class="line">    &#125;</span><br><span class="line">&#125;</span><br><span class="line"></span><br><span class="line"><span class="keyword">protected</span> RFuture&lt;Boolean&gt; <span class="title function_">unlockInnerAsync</span><span class="params">(<span class="type">long</span> threadId)</span> &#123;</span><br><span class="line">    <span class="keyword">return</span> evalWriteAsync(getRawName(), LongCodec.INSTANCE, RedisCommands.EVAL_BOOLEAN,</span><br><span class="line">            <span class="string">&quot;if (redis.call(&#x27;hexists&#x27;, KEYS[1], ARGV[3]) == 0) then &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;return nil;&quot;</span> +</span><br><span class="line">                    <span class="string">&quot;end; &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;local counter = redis.call(&#x27;hincrby&#x27;, KEYS[1], ARGV[3], -1); &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;if (counter &gt; 0) then &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;redis.call(&#x27;pexpire&#x27;, KEYS[1], ARGV[2]); &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;return 0; &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;else &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;redis.call(&#x27;del&#x27;, KEYS[1]); &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;redis.call(&#x27;publish&#x27;, KEYS[2], ARGV[1]); &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;return 1; &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;end; &quot;</span> +</span><br><span class="line">                    <span class="string">&quot;return nil;&quot;</span>,</span><br><span class="line">            Arrays.asList(getRawName(), getChannelName()), LockPubSub.UNLOCK_MESSAGE, internalLockLeaseTime, getLockName(threadId));</span><br><span class="line">&#125;</span><br></pre></td></tr></table></figure>
+
+</div><h2 id="4-2-Redlock-实现"><a href="#4-2-Redlock-实现" class="headerlink" title="4.2 Redlock 实现"></a>4.2 Redlock 实现</h2><div class="story post-story"><p>基于 Redis 的 Redisson 红锁 RedissonRedLock 对象实现了 Redlock 介绍的加锁算法。该对象也可以用来将多个 RLock 对象关联为一个红锁，每个 RLock 对象实例可以来自于不同的Redisson实例。</p>
+<p>实际上 RedissonRedLock 类已经被弃用了。</p>
+<blockquote>
+<p>This object is deprecated. RLock operations now propagated to all Redis slaves.</p>
+</blockquote>
+<p>被弃用的原因：</p>
+<blockquote>
+<p>The main idea behind RedLock algorithm is to overcome losing of lock acquisition during failover since Redis replication is asynchronous. Moreover its effectiveness still subject of dispute <a target="_blank" rel="noopener" href="https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html">https://martin.kleppmann.com/2016/02/08/how-to-do-distributed-locking.html</a><br>To overcome this every Redis command execution made by RLock object is synchronized through WAIT command introduced in Redis 3.0.</p>
+</blockquote>
+<p>TODO 源码阅读</p>
+<h1 id="5-与其他分布式锁算法的比较"><a href="#5-与其他分布式锁算法的比较" class="headerlink" title="5. 与其他分布式锁算法的比较"></a>5. 与其他分布式锁算法的比较</h1><p>Martin 认为如果需要使用一个更加安全的分布式锁，应该使用 Zookeeper，而不是 Redlock，本节来分析一下 Zookeeper 的方案。</p>
+<p>TODO</p>
+<h1 id="6-结论"><a href="#6-结论" class="headerlink" title="6. 结论"></a>6. 结论</h1><ul>
+<li><p>按照锁的两种用途，如果仅是为了效率(efficiency)，那么你可以自己选择你喜欢的一种分布式锁的实现。当然，你需要清楚地知道它在安全性上有哪些不足，以及它会带来什么后果。而如果你是为了正确性(correctness)，那么需要慎重考虑。</p>
 </li>
-<li><p>面向接口编程：事务管理器的高度抽象 PlatformTransactionManager，定义 getTransaction()、commit()、rollback() 等方法；AbstractPlatformTransactionManager 抽象类实现通用的获取事务、提交事务、回滚事务；DataSourceTransactionManager 等实现类，针对不同的数据源，实现了特性接口。</p>
+<li><p>Martin Kleppman 的新书《Designing Data-Intensive Applications》中会解答他在博客中的一些比较模糊的细节，需要在之后的学习中在慢慢研究。</p>
 </li>
-<li><p>Spring 的注释简单易懂且编码整洁，可读性极高。除此之外，其丰富的日志也让我们能更好的理解源码。</p>
+<li><p>RedissionRedlock 的弃用原因还需要好好研究。</p>
 </li>
 </ul>
 
@@ -2928,7 +2828,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
               
             
               
-                <p>本文永久链接是：<a href=http://yartang.top/2022/03/29/Spring%20Transcation%20%E6%BA%90%E7%A0%81%E7%AE%80%E4%BB%8B/>http://yartang.top/2022/03/29/Spring%20Transcation%20%E6%BA%90%E7%A0%81%E7%AE%80%E4%BB%8B/</a></p>
+                <p>本文永久链接是：<a href=http://yartang.top/2022/03/28/Redis%20%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%AE%80%E4%BB%8B/>http://yartang.top/2022/03/28/Redis%20%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%AE%80%E4%BB%8B/</a></p>
               
             
           </blockquote>
@@ -2945,7 +2845,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateModified" datetime="2022-03-29T00:27:31+08:00">
+          <div class="new-meta-item date" itemprop="dateModified" datetime="2022-03-29T00:27:47+08:00">
   <a class='notlink'>
     <i class="fa-solid fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2022年3月29日</p>
@@ -2957,8 +2857,8 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
         
           
   
-  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Spring/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Spring</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E4%BA%8B%E5%8A%A1/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>事务</p></a></div>
-  <span hidden itemprop="keywords">Spring 事务</span>
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/redis/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>redis</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>分布式锁</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E7%AE%97%E6%B3%95/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>分布式算法</p></a></div>
+  <span hidden itemprop="keywords">redis 分布式锁 分布式算法</span>
 
 
         
@@ -2976,16 +2876,11 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
   
     <div class="prev-next">
       
-        <a class='prev' href='/2022/03/29/Disruptor%20%E5%B9%B6%E5%8F%91%E9%98%9F%E5%88%97%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/'>
-          <p class='title'><i class="fa-solid fa-chevron-left" aria-hidden="true"></i>Disruptor 并发队列简要分析</p>
-          <p class='content'>1. 简介Disruptor 是英国外汇交易公司为了解决交易系统高时延、低吞吐量而设计的并发队列。基于Disruptor开发的系统单线程能支撑每秒600万订单，2010年在QCon演讲后，获得了...</p>
+        <a class='prev' href='/2022/03/29/Spring%20Transcation%20%E6%BA%90%E7%A0%81%E7%AE%80%E4%BB%8B/'>
+          <p class='title'><i class="fa-solid fa-chevron-left" aria-hidden="true"></i>Spring Transaction 源码简介</p>
+          <p class='content'>0. 引言事务管理对系统应用来说必不可少，我们以此来保证数据的完整性和安全性，这点在金融系统中显得尤为重要。笔者在实践中仅仅了解 @Transactional 注解的大概使用方法，对 Sprin...</p>
         </a>
       
-      
-        <a class='next' href='/2022/03/28/Redis%20%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%AE%80%E4%BB%8B/'>
-          <p class='title'>Redis分布式锁简介<i class="fa-solid fa-chevron-right" aria-hidden="true"></i></p>
-          <p class='content'>1. 分布式锁简介在分布式场景下，为了保持数据的最终一致性，可以通过分布式锁、分布式事务来满足业务需求。并发场景下，我们一般需要一个方法在某个时间段内只被一个线程执行。单机环境中，JUC 提供的...</p>
-        </a>
       
     </div>
   
@@ -3000,7 +2895,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
   
   <article class="post white-box reveal shadow" id="comments">
     <span hidden>
-      <meta itemprop="discussionUrl" content="/2022/03/29/Spring%20Transcation%20%E6%BA%90%E7%A0%81%E7%AE%80%E4%BB%8B/index.html#comments">
+      <meta itemprop="discussionUrl" content="/2022/03/28/Redis%20%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%AE%80%E4%BB%8B/index.html#comments">
     </span>
     <p ct><i class='fa-solid fa-comments'></i> 评论</p>
     
@@ -3033,7 +2928,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
 
     <div class='content'>
-        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-1-%E4%BA%8B%E5%8A%A1%E5%9B%9E%E9%A1%BE"><span class="toc-text">1.1 事务回顾</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-1-%E4%BA%8B%E5%8A%A1%E7%9A%84-ACID-%E7%89%B9%E6%80%A7"><span class="toc-text">1.1.1 事务的 ACID 特性</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#1-1-2-%E4%BA%8B%E5%8A%A1%E7%9A%84%E9%9A%94%E7%A6%BB%E7%BA%A7%E5%88%AB"><span class="toc-text">1.1.2 事务的隔离级别</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AF%BB%E5%86%99%E7%9A%84%E4%B8%89%E4%B8%AA%E9%97%AE%E9%A2%98"><span class="toc-text">数据库读写的三个问题</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#mysql-%E5%BA%95%E5%B1%82%E6%94%AF%E6%8C%81"><span class="toc-text">mysql 底层支持</span></a><ol class="toc-child"><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%BF%AB%E7%85%A7%E8%AF%BB%EF%BC%88%E4%B8%80%E8%87%B4%E6%80%A7%E9%9D%9E%E9%94%81%E5%AE%9A%E8%AF%BB%EF%BC%89"><span class="toc-text">快照读（一致性非锁定读）</span></a></li><li class="toc-item toc-level-5"><a class="toc-link" href="#%E5%BD%93%E5%89%8D%E8%AF%BB%EF%BC%88%E9%94%81%E5%AE%9A%E8%AF%BB%EF%BC%89"><span class="toc-text">当前读（锁定读）</span></a></li></ol></li><li class="toc-item toc-level-4"><a class="toc-link" href="#%E5%88%86%E7%BA%A7%E5%A4%84%E7%90%86%E7%AD%96%E7%95%A5"><span class="toc-text">分级处理策略</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-2-Spring-Transaction-%E7%AE%80%E4%BB%8B"><span class="toc-text">1.2 Spring Transaction 简介</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#1-2-1-Spring-Transaction-%E5%B1%9E%E6%80%A7"><span class="toc-text">1.2.1 Spring Transaction 属性</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#%E4%BC%A0%E6%92%AD%E6%9C%BA%E5%88%B6"><span class="toc-text">传播机制</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-2-2-%E4%B8%A4%E7%A7%8D%E5%AE%9E%E7%8E%B0%E6%96%B9%E5%BC%8F"><span class="toc-text">1.2.2 两种实现方式</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%A3%B0%E6%98%8E%E5%BC%8F%E4%BA%8B%E5%8A%A1%E7%AE%A1%E7%90%86"><span class="toc-text">声明式事务管理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E7%BC%96%E7%A8%8B%E5%BC%8F%E4%BA%8B%E5%8A%A1%E7%AE%A1%E7%90%86"><span class="toc-text">编程式事务管理</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#%E8%BF%90%E8%A1%8C%E7%BB%93%E6%9E%9C"><span class="toc-text">运行结果</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-%E5%88%9D%E6%AD%A5%E7%90%86%E8%A7%A3"><span class="toc-text">2.1 初步理解</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-1-%E6%A0%B8%E5%BF%83%E6%8E%A5%E5%8F%A3"><span class="toc-text">2.1.1 核心接口</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-2-%E4%BA%8B%E5%8A%A1%E7%AE%A1%E7%90%86%E5%99%A8-PlatformTransactionManager"><span class="toc-text">2.1.2 事务管理器 - PlatformTransactionManager</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-3-%E5%9F%BA%E6%9C%AC%E4%BA%8B%E5%8A%A1%E5%B1%9E%E6%80%A7%E5%AE%9A%E4%B9%89-TransactionDefinition"><span class="toc-text">2.1.3 基本事务属性定义 - TransactionDefinition</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-1-4-%E4%BA%8B%E5%8A%A1%E7%8A%B6%E6%80%81-TransactionStatus"><span class="toc-text">2.1.4 事务状态 - TransactionStatus</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-%E5%A3%B0%E6%98%8E%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90"><span class="toc-text">2.2 声明式事务源码分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-1-%E4%BB%A3%E7%90%86%E4%BA%8B%E5%8A%A1%E7%9A%84%E9%85%8D%E7%BD%AE-ProxyTransactionManagementConfiguration"><span class="toc-text">2.2.1 代理事务的配置 - ProxyTransactionManagementConfiguration</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-1-%E4%BA%8B%E5%8A%A1%E6%8B%A6%E6%88%AA%E5%99%A8%E2%80%94%E2%80%94%E4%BA%8B%E5%8A%A1%E7%9A%84%E5%85%A5%E5%8F%A3"><span class="toc-text">2.2.1 事务拦截器——事务的入口</span></a><ol class="toc-child"><li class="toc-item toc-level-4"><a class="toc-link" href="#TransactionAspectSupport-invokeWithinTransaction"><span class="toc-text">TransactionAspectSupport#invokeWithinTransaction</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#TransactionAspectSupport-createTransactionIfNecessary"><span class="toc-text">TransactionAspectSupport#createTransactionIfNecessary</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#invocation-proceedWithInvocation-%E5%9B%9E%E8%B0%83%E4%B8%9A%E5%8A%A1%E6%96%B9%E6%B3%95"><span class="toc-text">invocation.proceedWithInvocation() 回调业务方法</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#TransactionAspectSupport-completeTransactionAfterThrowing-amp-amp-completeTransactionAfterReturning"><span class="toc-text">TransactionAspectSupport#completeTransactionAfterThrowing() &amp;&amp; completeTransactionAfterReturning()</span></a></li><li class="toc-item toc-level-4"><a class="toc-link" href="#ThreadLocal-%E7%9A%84%E4%BD%BF%E7%94%A8"><span class="toc-text">ThreadLocal 的使用</span></a></li></ol></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-3-%E7%BC%96%E7%A8%8B%E5%BC%8F%E4%BA%8B%E5%8A%A1%E7%AE%A1%E7%90%86%E6%BA%90%E7%A0%81%E5%88%86%E6%9E%90"><span class="toc-text">2.3 编程式事务管理源码分析</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-4-AbstractPlatformTransactionManager-%E6%BA%90%E7%A0%81%E9%98%85%E8%AF%BB"><span class="toc-text">2.4 AbstractPlatformTransactionManager 源码阅读</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-1-getTransaction"><span class="toc-text">2.4.1 getTransaction()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-2-commit"><span class="toc-text">2.4.2 commit()</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-4-3-rollback"><span class="toc-text">2.4.3 rollback()</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1-%E5%A3%B0%E6%98%8E%E5%BC%8F%E4%BA%8B%E5%8A%A1%E7%9A%84%E7%B2%92%E5%BA%A6"><span class="toc-text">3.1 声明式事务的粒度</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2-%E5%A3%B0%E6%98%8E%E5%BC%8F%E4%BA%8B%E5%8A%A1%E6%8B%A6%E6%88%AA%E5%99%A8%E5%A4%B1%E6%95%88"><span class="toc-text">3.2 声明式事务拦截器失效</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-3-%E9%98%BF%E9%87%8C%E8%A7%84%E7%BA%A6"><span class="toc-text">3.3 阿里规约</span></a></li></ol>
+        <ol class="toc"><li class="toc-item toc-level-2"><a class="toc-link" href="#1-1-%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%9A%84%E5%BA%94%E7%94%A8%E5%9C%BA%E6%99%AF"><span class="toc-text">1.1 分布式锁的应用场景</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#1-2-%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%9A%84%E7%89%B9%E7%82%B9"><span class="toc-text">1.2 分布式锁的特点</span></a></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-1-%E5%8D%95-Redis-%E5%AE%9E%E4%BE%8B%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E5%AE%9E%E7%8E%B0%E5%88%86%E6%9E%90"><span class="toc-text">2.1 单 Redis 实例分布式锁实现分析</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#%E5%8D%95-Redis-%E5%AE%9E%E4%BE%8B%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%9A%84%E6%AD%A3%E7%A1%AE%E5%AE%9E%E7%8E%B0"><span class="toc-text">单 Redis 实例分布式锁的正确实现</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#2-2-Redlock-%E7%AE%97%E6%B3%95%E6%A6%82%E8%BF%B0"><span class="toc-text">2.2 Redlock 算法概述</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-1-%E8%AF%B7%E6%B1%82%E9%94%81"><span class="toc-text">2.2.1 请求锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-2-%E9%87%8A%E6%94%BE%E9%94%81"><span class="toc-text">2.2.2 释放锁</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#2-2-3-Redlock-%E5%AE%89%E5%85%A8%E6%80%A7%E8%AE%A8%E8%AE%BA"><span class="toc-text">2.2.3 Redlock 安全性讨论</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-1-Kleppmann-%E7%9A%84%E8%A7%82%E7%82%B9"><span class="toc-text">3.1 Kleppmann 的观点</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-1-%E4%B8%8E-Redlock-%E6%97%A0%E5%85%B3%E7%9A%84%E9%83%A8%E5%88%86"><span class="toc-text">3.1.1 与 Redlock 无关的部分</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-1-2-Redlock-%E9%83%A8%E5%88%86"><span class="toc-text">3.1.2 Redlock 部分</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#3-2-antirez-%E7%9A%84%E5%8F%8D%E9%A9%B3"><span class="toc-text">3.2 antirez 的反驳</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-1-fencing-token-%E6%9C%BA%E5%88%B6"><span class="toc-text">3.2.1 fencing token 机制</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#3-2-2-%E7%B3%BB%E7%BB%9F%E6%A8%A1%E5%9E%8B"><span class="toc-text">3.2.2 系统模型</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-1-Reentrant-Lock-%E5%AE%9E%E7%8E%B0"><span class="toc-text">4.1 Reentrant Lock 实现</span></a><ol class="toc-child"><li class="toc-item toc-level-3"><a class="toc-link" href="#getLock-%E6%96%B9%E6%B3%95"><span class="toc-text">getLock() 方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#lock-%E6%96%B9%E6%B3%95"><span class="toc-text">lock() 方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#tryAquire-%E6%96%B9%E6%B3%95"><span class="toc-text">tryAquire() 方法</span></a></li><li class="toc-item toc-level-3"><a class="toc-link" href="#unlock-%E6%96%B9%E6%B3%95"><span class="toc-text">unlock() 方法</span></a></li></ol></li><li class="toc-item toc-level-2"><a class="toc-link" href="#4-2-Redlock-%E5%AE%9E%E7%8E%B0"><span class="toc-text">4.2 Redlock 实现</span></a></li></ol>
     </div>
   </section>
 
@@ -3085,7 +2980,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 <script>
   window.pdata={}
   pdata.ispage=true;
-  pdata.postTitle="Spring Transaction 源码简介";
+  pdata.postTitle="Redis分布式锁简介";
   pdata.commentPath="";
   pdata.commentPlaceholder="";
   pdata.commentConfig={};
@@ -3199,7 +3094,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
 <!-- internal -->
 
-<script src="/js/app.js?time=1648484897335.js"></script>
+<script src="/js/app.js?time=1648484897345.js"></script>
 
 
 
@@ -3283,7 +3178,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
       
     </ul>
   </div>
-  <script>volantis.js('/js/plugins/rightMenu.js?time=1648484897335')</script>
+  <script>volantis.js('/js/plugins/rightMenu.js?time=1648484897345')</script>
 
 
 
@@ -3412,19 +3307,19 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
     
       const sites_api = document.getElementById('sites-api');
       if (sites_api != undefined && typeof SitesJS === 'undefined') {
-        volantis.js("/js/plugins/sites.js?time=1648484897335")
+        volantis.js("/js/plugins/sites.js?time=1648484897345")
       }
     
     
       const friends_api = document.getElementById('friends-api');
       if (friends_api != undefined && typeof FriendsJS === 'undefined') {
-        volantis.js("/js/plugins/friends.js?time=1648484897335")
+        volantis.js("/js/plugins/friends.js?time=1648484897345")
       }
     
     
       const contributors_api = document.getElementById('contributors-api');
       if (contributors_api != undefined && typeof ContributorsJS === 'undefined') {
-        volantis.js("/js/plugins/contributors.js?time=1648484897335")
+        volantis.js("/js/plugins/contributors.js?time=1648484897345")
       }
     
   };
@@ -3537,7 +3432,7 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
       VolantisFancyBox.bind('#valine_container .vcontent img:not(.vemoji)');
     }
   }
-  volantis.js('https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648484897335').then(pjax_valine)
+  volantis.js('https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648484897345').then(pjax_valine)
   volantis.pjax.push(pjax_valine);
 </script>
 
@@ -3555,7 +3450,7 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
 
   function loadSearchScript() {
     // see: layout/_partial/scripts/_ctrl/cdnCtrl.ejs
-    return volantis.js("/js/search/hexo.js?time=1648484897335");
+    return volantis.js("/js/search/hexo.js?time=1648484897345");
   }
 
   function loadSearchService() {
@@ -3846,7 +3741,7 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
 
 
 
-  <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"YarTang's Blog","url":"http://yartang.top/","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/","sameAs":["https://github.com/volantis-x"],"description":""},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"http://yartang.top/","name":"YarTang's Blog"}},{"@type":"ListItem","position":3,"item":{"@id":"http://yartang.top/2022/03/29/Spring Transcation 源码简介/","name":"Spring Transaction 源码简介"}}]},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Spring Transaction 源码简介","description":"","datePublished":"2022-03-28T16:20:39.000Z","dateModified":"2022-03-28T16:27:31.706Z","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"http://yartang.top/2022/03/29/Spring%20Transcation%20%E6%BA%90%E7%A0%81%E7%AE%80%E4%BB%8B/"},"author":{"@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/"},"publisher":{"@type":"Organization","name":"YarTang's Blog","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"http://yartang.top/2022/03/29/Spring%20Transcation%20%E6%BA%90%E7%A0%81%E7%AE%80%E4%BB%8B/","wordCount":0,"keywords":"Spring,事务","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+  <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"YarTang's Blog","url":"http://yartang.top/","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/","sameAs":["https://github.com/volantis-x"],"description":""},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"http://yartang.top/","name":"YarTang's Blog"}},{"@type":"ListItem","position":2,"item":{"@id":"http://yartang.top/categories/redis/","name":"redis"}},{"@type":"ListItem","position":3,"item":{"@id":"http://yartang.top/2022/03/28/Redis 分布式锁简介/","name":"Redis分布式锁简介"}}]},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Redis分布式锁简介","description":"","datePublished":"2022-03-27T18:39:53.000Z","dateModified":"2022-03-28T16:27:47.924Z","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"http://yartang.top/2022/03/28/Redis%20%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%AE%80%E4%BB%8B/"},"author":{"@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/"},"publisher":{"@type":"Organization","name":"YarTang's Blog","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"http://yartang.top/2022/03/28/Redis%20%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%AE%80%E4%BB%8B/","wordCount":0,"articleSection":"redis","keywords":"redis,分布式锁,分布式算法","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
 
 
 <!-- more -->

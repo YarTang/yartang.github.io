@@ -20,24 +20,26 @@
   <meta content="YarTang&#39;s Blog" name="apple-mobile-web-app-title">
   <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style">
   <meta content="telephone=no" name="format-detection">
-  <link rel="preload" href="/css/style.css?time=1648484699381" as="style">
+  <link rel="preload" href="/css/style.css?time=1648484897330" as="style">
   <link rel="preload" href="/media/fonts/VarelaRound/VarelaRound-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
 <link rel="preload" href="/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
 
   <!-- 页面元数据 -->
-  <title>并发队列简要分析 - YarTang's Blog</title>
-  <meta name="keywords" content="null">
+  <title>Disruptor 并发队列简要分析 - YarTang's Blog</title>
+  <meta name="keywords" content="Disruptor,并发编程,null">
   <meta name="description" content="1. 简介Disruptor 是英国外汇交易公司为了解决交易系统高时延、低吞吐量而设计的并发队列。基于Disruptor开发的系统单线程能支撑每秒600万订单，2010年在QCon演讲后，获得了业界关注。2011年，企业应用软件专家Martin Fowler专门撰写长文介绍。同年它还获得了Oracle官方的Duke大奖。 2. 背景知识在介绍 Disruptor 之前，我们需要复习一下相关的背景知">
 <meta property="og:type" content="article">
-<meta property="og:title" content="并发队列简要分析">
+<meta property="og:title" content="Disruptor 并发队列简要分析">
 <meta property="og:url" content="http://yartang.top/2022/03/29/Disruptor%20%E5%B9%B6%E5%8F%91%E9%98%9F%E5%88%97%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/index.html">
 <meta property="og:site_name" content="YarTang&#39;s Blog">
 <meta property="og:description" content="1. 简介Disruptor 是英国外汇交易公司为了解决交易系统高时延、低吞吐量而设计的并发队列。基于Disruptor开发的系统单线程能支撑每秒600万订单，2010年在QCon演讲后，获得了业界关注。2011年，企业应用软件专家Martin Fowler专门撰写长文介绍。同年它还获得了Oracle官方的Duke大奖。 2. 背景知识在介绍 Disruptor 之前，我们需要复习一下相关的背景知">
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/logo.png">
 <meta property="article:published_time" content="2022-03-28T16:22:11.000Z">
-<meta property="article:modified_time" content="2022-03-28T16:24:28.612Z">
+<meta property="article:modified_time" content="2022-03-28T16:26:58.782Z">
 <meta property="article:author" content="yartang">
+<meta property="article:tag" content="Disruptor">
+<meta property="article:tag" content="并发编程">
 <meta name="twitter:card" content="summary">
 <meta name="twitter:image" content="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/logo.png">
   <!-- feed -->
@@ -1791,8 +1793,8 @@ ul.list-v >li>a:hover {
 }
 
   </style>
-  <link rel="stylesheet" href="/css/style.css?time=1648484699381" media="print" onload="this.media='all';this.onload=null">
-  <noscript><link rel="stylesheet" href="/css/style.css?time=1648484699381"></noscript>
+  <link rel="stylesheet" href="/css/style.css?time=1648484897330" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css?time=1648484897330"></noscript>
     <script>
       let userColorScheme=localStorage.getItem("color-scheme")
       if(userColorScheme){
@@ -1869,9 +1871,9 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
   volantis.dom = {}; // 页面Dom see: /source/js/app.js etc.
 
   volantis.GLOBAL_CONFIG ={
-    cdn: {"js":{"app":"/js/app.js?time=1648484699381","sites":"/js/plugins/sites.js?time=1648484699381","friends":"/js/plugins/friends.js?time=1648484699381","parallax":"/js/plugins/parallax.js?time=1648484699381","rightMenu":"/js/plugins/rightMenu.js?time=1648484699381","contributors":"/js/plugins/contributors.js?time=1648484699381","message":"/js/thirdparty/message.js?time=1648484699381","valine":"https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648484699381","search":"/js/search/hexo.js?time=1648484699381"},"css":{"style":"/css/style.css?time=1648484699381","message":"/css/message.css?time=1648484699381"}},
+    cdn: {"js":{"app":"/js/app.js?time=1648484897330","sites":"/js/plugins/sites.js?time=1648484897330","friends":"/js/plugins/friends.js?time=1648484897330","parallax":"/js/plugins/parallax.js?time=1648484897330","rightMenu":"/js/plugins/rightMenu.js?time=1648484897330","contributors":"/js/plugins/contributors.js?time=1648484897330","message":"/js/thirdparty/message.js?time=1648484897330","valine":"https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648484897330","search":"/js/search/hexo.js?time=1648484897330"},"css":{"style":"/css/style.css?time=1648484897330","message":"/css/message.css?time=1648484897330"}},
     default: {"avatar":"/media/placeholder/avatar/round/3442075.svg","link":"/media/placeholder/link/8f277b4ee0ecd.svg","cover":"/media/placeholder/cover/76b86c0226ffd.svg","image":"/media/placeholder/image/2659360.svg"},
-    lastupdate: new Date('Tue Mar 29 2022 00:24:59 GMT+0800 (中国标准时间)'),
+    lastupdate: new Date('Tue Mar 29 2022 00:28:17 GMT+0800 (中国标准时间)'),
     sidebar: {
       for_page: ["blogger","category","tagcloud","donate"],
       for_post: ["toc"],
@@ -2570,7 +2572,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     
     
       <h1 class="title" itemprop="name headline">
-        并发队列简要分析
+        Disruptor 并发队列简要分析
       </h1>
       <div class='new-meta-box'>
         
@@ -2772,7 +2774,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateModified" datetime="2022-03-29T00:24:28+08:00">
+          <div class="new-meta-item date" itemprop="dateModified" datetime="2022-03-29T00:26:58+08:00">
   <a class='notlink'>
     <i class="fa-solid fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2022年3月29日</p>
@@ -2783,6 +2785,10 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
       
         
           
+  
+  <div class="new-meta-item meta-tags"><a class="tag" href="/tags/Disruptor/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>Disruptor</p></a></div> <div class="new-meta-item meta-tags"><a class="tag" href="/tags/%E5%B9%B6%E5%8F%91%E7%BC%96%E7%A8%8B/" rel="nofollow"><i class="fa-solid fa-hashtag fa-fw" aria-hidden="true"></i><p>并发编程</p></a></div>
+  <span hidden itemprop="keywords">Disruptor 并发编程</span>
+
 
         
       
@@ -2903,7 +2909,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 <script>
   window.pdata={}
   pdata.ispage=true;
-  pdata.postTitle="并发队列简要分析";
+  pdata.postTitle="Disruptor 并发队列简要分析";
   pdata.commentPath="";
   pdata.commentPlaceholder="";
   pdata.commentConfig={};
@@ -3017,7 +3023,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
 <!-- internal -->
 
-<script src="/js/app.js?time=1648484699381.js"></script>
+<script src="/js/app.js?time=1648484897330.js"></script>
 
 
 
@@ -3101,7 +3107,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
       
     </ul>
   </div>
-  <script>volantis.js('/js/plugins/rightMenu.js?time=1648484699381')</script>
+  <script>volantis.js('/js/plugins/rightMenu.js?time=1648484897330')</script>
 
 
 
@@ -3230,19 +3236,19 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
     
       const sites_api = document.getElementById('sites-api');
       if (sites_api != undefined && typeof SitesJS === 'undefined') {
-        volantis.js("/js/plugins/sites.js?time=1648484699381")
+        volantis.js("/js/plugins/sites.js?time=1648484897330")
       }
     
     
       const friends_api = document.getElementById('friends-api');
       if (friends_api != undefined && typeof FriendsJS === 'undefined') {
-        volantis.js("/js/plugins/friends.js?time=1648484699381")
+        volantis.js("/js/plugins/friends.js?time=1648484897330")
       }
     
     
       const contributors_api = document.getElementById('contributors-api');
       if (contributors_api != undefined && typeof ContributorsJS === 'undefined') {
-        volantis.js("/js/plugins/contributors.js?time=1648484699381")
+        volantis.js("/js/plugins/contributors.js?time=1648484897330")
       }
     
   };
@@ -3355,7 +3361,7 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
       VolantisFancyBox.bind('#valine_container .vcontent img:not(.vemoji)');
     }
   }
-  volantis.js('https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648484699381').then(pjax_valine)
+  volantis.js('https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648484897330').then(pjax_valine)
   volantis.pjax.push(pjax_valine);
 </script>
 
@@ -3373,7 +3379,7 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
 
   function loadSearchScript() {
     // see: layout/_partial/scripts/_ctrl/cdnCtrl.ejs
-    return volantis.js("/js/search/hexo.js?time=1648484699381");
+    return volantis.js("/js/search/hexo.js?time=1648484897330");
   }
 
   function loadSearchService() {
@@ -3664,7 +3670,7 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
 
 
 
-  <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"YarTang's Blog","url":"http://yartang.top/","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/","sameAs":["https://github.com/volantis-x"],"description":""},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"http://yartang.top/","name":"YarTang's Blog"}},{"@type":"ListItem","position":3,"item":{"@id":"http://yartang.top/2022/03/29/Disruptor 并发队列简要分析/","name":"并发队列简要分析"}}]},{"@context":"http://schema.org","@type":"BlogPosting","headline":"并发队列简要分析","description":"","datePublished":"2022-03-28T16:22:11.000Z","dateModified":"2022-03-28T16:24:28.612Z","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"http://yartang.top/2022/03/29/Disruptor%20%E5%B9%B6%E5%8F%91%E9%98%9F%E5%88%97%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/"},"author":{"@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/"},"publisher":{"@type":"Organization","name":"YarTang's Blog","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"http://yartang.top/2022/03/29/Disruptor%20%E5%B9%B6%E5%8F%91%E9%98%9F%E5%88%97%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/","wordCount":0,"image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+  <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"YarTang's Blog","url":"http://yartang.top/","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/","sameAs":["https://github.com/volantis-x"],"description":""},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"http://yartang.top/","name":"YarTang's Blog"}},{"@type":"ListItem","position":3,"item":{"@id":"http://yartang.top/2022/03/29/Disruptor 并发队列简要分析/","name":"Disruptor 并发队列简要分析"}}]},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Disruptor 并发队列简要分析","description":"","datePublished":"2022-03-28T16:22:11.000Z","dateModified":"2022-03-28T16:26:58.782Z","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"http://yartang.top/2022/03/29/Disruptor%20%E5%B9%B6%E5%8F%91%E9%98%9F%E5%88%97%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/"},"author":{"@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/"},"publisher":{"@type":"Organization","name":"YarTang's Blog","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"http://yartang.top/2022/03/29/Disruptor%20%E5%B9%B6%E5%8F%91%E9%98%9F%E5%88%97%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/","wordCount":0,"keywords":"Disruptor,并发编程","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
 
 
 <!-- more -->
