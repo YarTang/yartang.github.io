@@ -20,7 +20,7 @@
   <meta content="YarTang&#39;s Blog" name="apple-mobile-web-app-title">
   <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style">
   <meta content="telephone=no" name="format-detection">
-  <link rel="preload" href="/css/style.css?time=1648485628724" as="style">
+  <link rel="preload" href="/css/style.css?time=1648485919714" as="style">
   <link rel="preload" href="/media/fonts/VarelaRound/VarelaRound-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
 <link rel="preload" href="/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
 
@@ -36,7 +36,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/logo.png">
 <meta property="article:published_time" content="2022-03-28T16:22:11.000Z">
-<meta property="article:modified_time" content="2022-03-28T16:26:58.782Z">
+<meta property="article:modified_time" content="2022-03-28T16:45:10.387Z">
 <meta property="article:author" content="yartang">
 <meta property="article:tag" content="并发编程">
 <meta property="article:tag" content="Disruptor">
@@ -1793,8 +1793,8 @@ ul.list-v >li>a:hover {
 }
 
   </style>
-  <link rel="stylesheet" href="/css/style.css?time=1648485628724" media="print" onload="this.media='all';this.onload=null">
-  <noscript><link rel="stylesheet" href="/css/style.css?time=1648485628724"></noscript>
+  <link rel="stylesheet" href="/css/style.css?time=1648485919714" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css?time=1648485919714"></noscript>
     <script>
       let userColorScheme=localStorage.getItem("color-scheme")
       if(userColorScheme){
@@ -1871,9 +1871,9 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
   volantis.dom = {}; // 页面Dom see: /source/js/app.js etc.
 
   volantis.GLOBAL_CONFIG ={
-    cdn: {"js":{"app":"/js/app.js?time=1648485628724","sites":"/js/plugins/sites.js?time=1648485628724","friends":"/js/plugins/friends.js?time=1648485628724","parallax":"/js/plugins/parallax.js?time=1648485628724","rightMenu":"/js/plugins/rightMenu.js?time=1648485628724","contributors":"/js/plugins/contributors.js?time=1648485628724","message":"/js/thirdparty/message.js?time=1648485628724","valine":"https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648485628724","search":"/js/search/hexo.js?time=1648485628724"},"css":{"style":"/css/style.css?time=1648485628724","message":"/css/message.css?time=1648485628724"}},
+    cdn: {"js":{"app":"/js/app.js?time=1648485919714","sites":"/js/plugins/sites.js?time=1648485919714","friends":"/js/plugins/friends.js?time=1648485919714","parallax":"/js/plugins/parallax.js?time=1648485919714","rightMenu":"/js/plugins/rightMenu.js?time=1648485919714","contributors":"/js/plugins/contributors.js?time=1648485919714","message":"/js/thirdparty/message.js?time=1648485919714","valine":"https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648485919714","search":"/js/search/hexo.js?time=1648485919714"},"css":{"style":"/css/style.css?time=1648485919714","message":"/css/message.css?time=1648485919714"}},
     default: {"avatar":"/media/placeholder/avatar/round/3442075.svg","link":"/media/placeholder/link/8f277b4ee0ecd.svg","cover":"/media/placeholder/cover/76b86c0226ffd.svg","image":"/media/placeholder/image/2659360.svg"},
-    lastupdate: new Date('Tue Mar 29 2022 00:40:28 GMT+0800 (中国标准时间)'),
+    lastupdate: new Date('Tue Mar 29 2022 00:45:19 GMT+0800 (中国标准时间)'),
     sidebar: {
       for_page: ["blogger","category","tagcloud","donate"],
       for_post: ["toc"],
@@ -2637,7 +2637,41 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 <p><em>Fig. 1. 计算机内存模型</em></p>
 <p>当CPU执行运算的时候，它先去L1查找所需的数据、再去L2、然后是L3，如果最后这些缓存中都没有，所需的数据就要去主内存拿。走得越远，运算耗费的时间就越长。所以如果你在做一些很频繁的事，你要尽量确保数据在L1缓存中。</p>
 <p>另外，线程之间共享一份数据的时候，需要一个线程把数据写回主存，而另一个线程访问主存中相应的数据。下表给出了 CPU 访问不同层级数据所耗费的时间，CPU 从主存中读取数据的时间比从 L1 中慢了 2个数量级。</p>
-<p><em>Table. 1. CPU 访问不同层级数据的时间成本</em><br>| 层级   | 大约需要的 CPU 周期 | 大约需要的时间 |<br>| —— | ——————- | ————– |<br>| 主存   | -                   | 60 ~ 80 ns     |<br>| L3     | 40 ~ 45 cycles      | 15 ns          |<br>| L2     | 10 cycles           | 3 ns           |<br>| L1     | 3 ~ 4 cycles        | 1ns            |<br>| 寄存器 | 1 cycles            | -              |</p>
+<p><em>Table. 1. CPU 访问不同层级数据的时间成本</em></p>
+<table>
+<thead>
+<tr>
+<th>层级</th>
+<th>大约需要的 CPU 周期</th>
+<th>大约需要的时间</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>主存</td>
+<td>-</td>
+<td>60 ~ 80 ns</td>
+</tr>
+<tr>
+<td>L3</td>
+<td>40 ~ 45 cycles</td>
+<td>15 ns</td>
+</tr>
+<tr>
+<td>L2</td>
+<td>10 cycles</td>
+<td>3 ns</td>
+</tr>
+<tr>
+<td>L1</td>
+<td>3 ~ 4 cycles</td>
+<td>1ns</td>
+</tr>
+<tr>
+<td>寄存器</td>
+<td>1 cycles</td>
+<td>-</td>
+</tr>
+</tbody></table>
 <h4 id="缓存行"><a href="#缓存行" class="headerlink" title="缓存行"></a>缓存行</h4><p>Cache是由很多个cache line组成的。每个cache line通常是64字节，并且它有效地引用主内存中的一块儿地址。一个Java的long类型变量是8字节，因此在一个缓存行中可以存8个long类型的变量。</p>
 <p>CPU每次从主存中拉取数据时，会把相邻的数据也存入同一个cache line。</p>
 <p>在访问一个long数组的时候，如果数组中的一个值被加载到缓存中，它会自动加载另外7个。因此你能非常快的遍历这个数组。事实上，你可以非常快速的遍历在连续内存块中分配的任意数据结构。</p>
@@ -2655,10 +2689,84 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 </ul>
 </div><h2 id="2-2-锁与-CAS"><a href="#2-2-锁与-CAS" class="headerlink" title="2.2 锁与 CAS"></a>2.2 锁与 CAS</h2><div class="story post-story"><h3 id="2-2-1-加锁"><a href="#2-2-1-加锁" class="headerlink" title="2.2.1 加锁"></a>2.2.1 加锁</h3><p>现实编程过程中，加锁通常会严重地影响性能。线程会因为竞争不到锁而被挂起，等锁被释放的时候，线程又会被恢复，这个过程中存在着很大的开销，并且通常会有较长时间的中断，因为当一个线程正在等待锁时，它不能做任何其他事情。如果一个线程在持有锁的情况下被延迟执行，例如发生了缺页错误、调度延迟或者其它类似情况，那么所有需要这个锁的线程都无法执行下去。如果被阻塞线程的优先级较高，而持有锁的线程优先级较低，就会发生优先级反转。</p>
 <p>LAMX Disruptor 论文中给出了使用锁和 CAS 的成本比较：调用一个函数，在循环中将 long 类型计数器递增 5 亿次，实验结果如 Table. 2。显然，多线程情况下使用 CAS 的竞争成本明显降低。 </p>
-<p><em>Table. 2. 竞争成本比较</em><br>| 方法                | 时间（ms） |<br>| ——————- | ———- |<br>| 单线程              | 300        |<br>| 使用锁的单线程      | 10,000     |<br>| 使用锁的两个线程    | 224,000    |<br>| 使用 CAS 的单线程   | 5,700      |<br>| 使用 CAS 的两个线程 | 30,000     |</p>
+<p><em>Table. 2. 竞争成本比较</em></p>
+<table>
+<thead>
+<tr>
+<th>方法</th>
+<th>时间（ms）</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>单线程</td>
+<td>300</td>
+</tr>
+<tr>
+<td>使用锁的单线程</td>
+<td>10,000</td>
+</tr>
+<tr>
+<td>使用锁的两个线程</td>
+<td>224,000</td>
+</tr>
+<tr>
+<td>使用 CAS 的单线程</td>
+<td>5,700</td>
+</tr>
+<tr>
+<td>使用 CAS 的两个线程</td>
+<td>30,000</td>
+</tr>
+</tbody></table>
 <h3 id="2-2-2-CAS-Compare-And-Swap"><a href="#2-2-2-CAS-Compare-And-Swap" class="headerlink" title="2.2.2 CAS(Compare And Swap)"></a>2.2.2 CAS(Compare And Swap)</h3><p>CAS 操作是一种特殊的机器代码指令，它允许有条件地将内存中的一个字设置为原子操作，可以用 ==compareAndSwap(oldValue, newValue)== 表示。</p>
 </div><h2 id="2-3-ArrayBlockingQueue-分析"><a href="#2-3-ArrayBlockingQueue-分析" class="headerlink" title="2.3 ArrayBlockingQueue 分析"></a>2.3 ArrayBlockingQueue 分析</h2><div class="story post-story"><p>juc 包中提供了 Table. 3 几个线程安全的队列。</p>
-<p><em>Table. 3. juc 内置线程安全队列</em><br>| 队列                  | 有界性      | 加锁 | 底层结构   |<br>| ——————— | ———– | —- | ———- |<br>| ArrayBlockingQueue    | 有界        | 加锁 | ArrayList  |<br>| LinkedBlockingQueue   | 可选有/无界 | 加锁 | LinkedList |<br>| ConcurrentLinkedQueue | 无界        | 无锁 | LinkedList |<br>| LinkedTransferQueue   | 无界        | 无锁 | LinkedList |<br>| PriorityBlockingQueue | 无界        | 加锁 | Heap       |<br>| DelayQueue            | 无界        | 加锁 | Heap       |</p>
+<p><em>Table. 3. juc 内置线程安全队列</em></p>
+<table>
+<thead>
+<tr>
+<th>队列</th>
+<th>有界性</th>
+<th>加锁</th>
+<th>底层结构</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>ArrayBlockingQueue</td>
+<td>有界</td>
+<td>加锁</td>
+<td>ArrayList</td>
+</tr>
+<tr>
+<td>LinkedBlockingQueue</td>
+<td>可选有/无界</td>
+<td>加锁</td>
+<td>LinkedList</td>
+</tr>
+<tr>
+<td>ConcurrentLinkedQueue</td>
+<td>无界</td>
+<td>无锁</td>
+<td>LinkedList</td>
+</tr>
+<tr>
+<td>LinkedTransferQueue</td>
+<td>无界</td>
+<td>无锁</td>
+<td>LinkedList</td>
+</tr>
+<tr>
+<td>PriorityBlockingQueue</td>
+<td>无界</td>
+<td>加锁</td>
+<td>Heap</td>
+</tr>
+<tr>
+<td>DelayQueue</td>
+<td>无界</td>
+<td>加锁</td>
+<td>Heap</td>
+</tr>
+</tbody></table>
 <p>队列的底层一般分成三种：数组、链表和堆。其中，堆一般情况下是为了实现带有优先级特性的队列，暂且不考虑。</p>
 <p>我们就从数组和链表两种数据结构来看，基于数组线程安全的队列，比较典型的是 ArrayBlockingQueue，它主要通过加锁的方式来保证线程安全；基于链表的线程安全队列分成 LinkedBlockingQueue 和 ConcurrentLinkedQueue 两大类，前者也通过锁的方式来实现线程安全，而后者以及上面表格中的 LinkedTransferQueue 都是通过 CAS 这种不加锁的方式来实现的。</p>
 <p>通过不加锁的方式实现的队列都是无界的（无法保证队列的长度在确定的范围内）；而加锁的方式，可以实现有界队列。在稳定性要求特别高的系统中，为了防止生产者速度过快，导致内存溢出，只能选择有界队列；同时，为了减少 Java GC 对系统性能的影响，会尽量选择 Array/Heap 格式的数据结构。这样筛选下来，符合条件的队列就只有 ArrayBlockingQueue。</p>
@@ -2774,7 +2882,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateModified" datetime="2022-03-29T00:26:58+08:00">
+          <div class="new-meta-item date" itemprop="dateModified" datetime="2022-03-29T00:45:10+08:00">
   <a class='notlink'>
     <i class="fa-solid fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2022年3月29日</p>
@@ -3023,7 +3131,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
 <!-- internal -->
 
-<script src="/js/app.js?time=1648485628724.js"></script>
+<script src="/js/app.js?time=1648485919714.js"></script>
 
 
 
@@ -3107,7 +3215,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
       
     </ul>
   </div>
-  <script>volantis.js('/js/plugins/rightMenu.js?time=1648485628724')</script>
+  <script>volantis.js('/js/plugins/rightMenu.js?time=1648485919714')</script>
 
 
 
@@ -3236,19 +3344,19 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
     
       const sites_api = document.getElementById('sites-api');
       if (sites_api != undefined && typeof SitesJS === 'undefined') {
-        volantis.js("/js/plugins/sites.js?time=1648485628724")
+        volantis.js("/js/plugins/sites.js?time=1648485919714")
       }
     
     
       const friends_api = document.getElementById('friends-api');
       if (friends_api != undefined && typeof FriendsJS === 'undefined') {
-        volantis.js("/js/plugins/friends.js?time=1648485628724")
+        volantis.js("/js/plugins/friends.js?time=1648485919714")
       }
     
     
       const contributors_api = document.getElementById('contributors-api');
       if (contributors_api != undefined && typeof ContributorsJS === 'undefined') {
-        volantis.js("/js/plugins/contributors.js?time=1648485628724")
+        volantis.js("/js/plugins/contributors.js?time=1648485919714")
       }
     
   };
@@ -3361,7 +3469,7 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
       VolantisFancyBox.bind('#valine_container .vcontent img:not(.vemoji)');
     }
   }
-  volantis.js('https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648485628724').then(pjax_valine)
+  volantis.js('https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648485919714').then(pjax_valine)
   volantis.pjax.push(pjax_valine);
 </script>
 
@@ -3379,7 +3487,7 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
 
   function loadSearchScript() {
     // see: layout/_partial/scripts/_ctrl/cdnCtrl.ejs
-    return volantis.js("/js/search/hexo.js?time=1648485628724");
+    return volantis.js("/js/search/hexo.js?time=1648485919714");
   }
 
   function loadSearchService() {
@@ -3670,7 +3778,7 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
 
 
 
-  <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"YarTang's Blog","url":"http://yartang.top/","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/","sameAs":["https://github.com/volantis-x"],"description":""},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"http://yartang.top/","name":"YarTang's Blog"}},{"@type":"ListItem","position":3,"item":{"@id":"http://yartang.top/2022/03/29/Disruptor 并发队列简要分析/","name":"Disruptor 并发队列简要分析"}}]},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Disruptor 并发队列简要分析","description":"","datePublished":"2022-03-28T16:22:11.000Z","dateModified":"2022-03-28T16:26:58.782Z","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"http://yartang.top/2022/03/29/Disruptor%20%E5%B9%B6%E5%8F%91%E9%98%9F%E5%88%97%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/"},"author":{"@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/"},"publisher":{"@type":"Organization","name":"YarTang's Blog","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"http://yartang.top/2022/03/29/Disruptor%20%E5%B9%B6%E5%8F%91%E9%98%9F%E5%88%97%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/","wordCount":0,"keywords":"并发编程,Disruptor","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+  <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"YarTang's Blog","url":"http://yartang.top/","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/","sameAs":["https://github.com/volantis-x"],"description":""},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"http://yartang.top/","name":"YarTang's Blog"}},{"@type":"ListItem","position":3,"item":{"@id":"http://yartang.top/2022/03/29/Disruptor 并发队列简要分析/","name":"Disruptor 并发队列简要分析"}}]},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Disruptor 并发队列简要分析","description":"","datePublished":"2022-03-28T16:22:11.000Z","dateModified":"2022-03-28T16:45:10.387Z","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"http://yartang.top/2022/03/29/Disruptor%20%E5%B9%B6%E5%8F%91%E9%98%9F%E5%88%97%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/"},"author":{"@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/"},"publisher":{"@type":"Organization","name":"YarTang's Blog","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"http://yartang.top/2022/03/29/Disruptor%20%E5%B9%B6%E5%8F%91%E9%98%9F%E5%88%97%E7%AE%80%E8%A6%81%E5%88%86%E6%9E%90/","wordCount":0,"keywords":"并发编程,Disruptor","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
 
 
 <!-- more -->
