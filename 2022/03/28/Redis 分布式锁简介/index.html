@@ -20,7 +20,7 @@
   <meta content="YarTang&#39;s Blog" name="apple-mobile-web-app-title">
   <meta content="black-translucent" name="apple-mobile-web-app-status-bar-style">
   <meta content="telephone=no" name="format-detection">
-  <link rel="preload" href="/css/style.css?time=1648484897345" as="style">
+  <link rel="preload" href="/css/style.css?time=1648484952116" as="style">
   <link rel="preload" href="/media/fonts/VarelaRound/VarelaRound-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
 <link rel="preload" href="/media/fonts/UbuntuMono/UbuntuMono-Regular.ttf" as="font" type="font/ttf" crossorigin="anonymous">
 
@@ -36,7 +36,7 @@
 <meta property="og:locale" content="zh_CN">
 <meta property="og:image" content="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/logo.png">
 <meta property="article:published_time" content="2022-03-27T18:39:53.000Z">
-<meta property="article:modified_time" content="2022-03-28T16:27:47.924Z">
+<meta property="article:modified_time" content="2022-03-28T16:28:56.935Z">
 <meta property="article:author" content="yartang">
 <meta property="article:tag" content="redis">
 <meta property="article:tag" content="分布式锁">
@@ -1794,8 +1794,8 @@ ul.list-v >li>a:hover {
 }
 
   </style>
-  <link rel="stylesheet" href="/css/style.css?time=1648484897345" media="print" onload="this.media='all';this.onload=null">
-  <noscript><link rel="stylesheet" href="/css/style.css?time=1648484897345"></noscript>
+  <link rel="stylesheet" href="/css/style.css?time=1648484952116" media="print" onload="this.media='all';this.onload=null">
+  <noscript><link rel="stylesheet" href="/css/style.css?time=1648484952116"></noscript>
     <script>
       let userColorScheme=localStorage.getItem("color-scheme")
       if(userColorScheme){
@@ -1872,9 +1872,9 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
   volantis.dom = {}; // 页面Dom see: /source/js/app.js etc.
 
   volantis.GLOBAL_CONFIG ={
-    cdn: {"js":{"app":"/js/app.js?time=1648484897345","sites":"/js/plugins/sites.js?time=1648484897345","friends":"/js/plugins/friends.js?time=1648484897345","parallax":"/js/plugins/parallax.js?time=1648484897345","rightMenu":"/js/plugins/rightMenu.js?time=1648484897345","contributors":"/js/plugins/contributors.js?time=1648484897345","message":"/js/thirdparty/message.js?time=1648484897345","valine":"https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648484897345","search":"/js/search/hexo.js?time=1648484897345"},"css":{"style":"/css/style.css?time=1648484897345","message":"/css/message.css?time=1648484897345"}},
+    cdn: {"js":{"app":"/js/app.js?time=1648484952116","sites":"/js/plugins/sites.js?time=1648484952115","friends":"/js/plugins/friends.js?time=1648484952115","parallax":"/js/plugins/parallax.js?time=1648484952115","rightMenu":"/js/plugins/rightMenu.js?time=1648484952115","contributors":"/js/plugins/contributors.js?time=1648484952115","message":"/js/thirdparty/message.js?time=1648484952115","valine":"https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648484952115","search":"/js/search/hexo.js?time=1648484952116"},"css":{"style":"/css/style.css?time=1648484952116","message":"/css/message.css?time=1648484952115"}},
     default: {"avatar":"/media/placeholder/avatar/round/3442075.svg","link":"/media/placeholder/link/8f277b4ee0ecd.svg","cover":"/media/placeholder/cover/76b86c0226ffd.svg","image":"/media/placeholder/image/2659360.svg"},
-    lastupdate: new Date('Tue Mar 29 2022 00:28:17 GMT+0800 (中国标准时间)'),
+    lastupdate: new Date('Tue Mar 29 2022 00:29:12 GMT+0800 (中国标准时间)'),
     sidebar: {
       for_page: ["blogger","category","tagcloud","donate"],
       for_post: ["toc"],
@@ -2701,7 +2701,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 <li>与 Redlock 无关。主要是分布式锁的相关问题，他分析得出即使存在一个完美实现的分布式锁（且实现了自动过期时间功能），如果服务端不提供 fencing 等机制，分布式锁也是不安全的。</li>
 <li>对 Redlock 本身的批评。由于 Redlock 本质上是建立在一个同步模型之上，对系统的记时假设（timing assumption）有很强的要求，因此本身的安全性不够。</li>
 </ul>
-<h3 id="3-1-1-与-Redlock-无关的部分"><a href="#3-1-1-与-Redlock-无关的部分" class="headerlink" title="3.1.1 与 Redlock 无关的部分"></a>3.1.1 与 Redlock 无关的部分</h3><p>LTAI5tRRKsyJbH8S98zFhmdk<br>DQLWjyctDLLyHLGrjdDRRkyADL3VSl<br>Martin 给出了如下的时序图 Fig.1：</p>
+<h3 id="3-1-1-与-Redlock-无关的部分"><a href="#3-1-1-与-Redlock-无关的部分" class="headerlink" title="3.1.1 与 Redlock 无关的部分"></a>3.1.1 与 Redlock 无关的部分</h3><p>Martin 给出了如下的时序图 Fig.1：</p>
 <p><img src="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647704258856unsafe-lock.png" class="lazyload" data-srcset="https://yartang-blogs.oss-cn-beijing.aliyuncs.com/blog-imgs/1647704258856unsafe-lock.png" srcset="data:image/gif;base64,R0lGODlhAQABAIAAAP///////yH5BAEKAAEALAAAAAABAAEAAAICTAEAOw==" alt="Fig.1. unsafe lock"></p>
 <p><em>Fig.1. 不安全的分布式锁时序图</em></p>
 <p>在上面的时序图中，假设锁服务本身是没有问题的，它总是能保证任一时刻最多只有一个客户端获得锁。<code>lease</code> 这个词等同于一个带有自动过期功能的锁。客户端 1 在获得锁之后发生了很长时间的 GC pause，在此期间，它获得的锁过期了，而客户端2获得了锁。当客户 1 从 GC pause 中恢复过来的时候，它不知道自己持有的锁已经过期了，它依然向共享资源（上图中是一个存储服务）发起了写数据请求，而这时锁实际上被客户端 2 持有，因此两个客户端的写请求就有可能冲突（锁的互斥作用失效了）。</p>
@@ -2845,7 +2845,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
     <div class='new-meta-box'>
       
         
-          <div class="new-meta-item date" itemprop="dateModified" datetime="2022-03-29T00:27:47+08:00">
+          <div class="new-meta-item date" itemprop="dateModified" datetime="2022-03-29T00:28:56+08:00">
   <a class='notlink'>
     <i class="fa-solid fa-edit fa-fw" aria-hidden="true"></i>
     <p>更新于：2022年3月29日</p>
@@ -3094,7 +3094,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
 
 <!-- internal -->
 
-<script src="/js/app.js?time=1648484897345.js"></script>
+<script src="/js/app.js?time=1648484952116.js"></script>
 
 
 
@@ -3178,7 +3178,7 @@ if (/*@cc_on!@*/false || (!!window.MSInputMethodContext && !!document.documentMo
       
     </ul>
   </div>
-  <script>volantis.js('/js/plugins/rightMenu.js?time=1648484897345')</script>
+  <script>volantis.js('/js/plugins/rightMenu.js?time=1648484952115')</script>
 
 
 
@@ -3307,19 +3307,19 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
     
       const sites_api = document.getElementById('sites-api');
       if (sites_api != undefined && typeof SitesJS === 'undefined') {
-        volantis.js("/js/plugins/sites.js?time=1648484897345")
+        volantis.js("/js/plugins/sites.js?time=1648484952115")
       }
     
     
       const friends_api = document.getElementById('friends-api');
       if (friends_api != undefined && typeof FriendsJS === 'undefined') {
-        volantis.js("/js/plugins/friends.js?time=1648484897345")
+        volantis.js("/js/plugins/friends.js?time=1648484952115")
       }
     
     
       const contributors_api = document.getElementById('contributors-api');
       if (contributors_api != undefined && typeof ContributorsJS === 'undefined') {
-        volantis.js("/js/plugins/contributors.js?time=1648484897345")
+        volantis.js("/js/plugins/contributors.js?time=1648484952115")
       }
     
   };
@@ -3432,7 +3432,7 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
       VolantisFancyBox.bind('#valine_container .vcontent img:not(.vemoji)');
     }
   }
-  volantis.js('https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648484897345').then(pjax_valine)
+  volantis.js('https://npm.elemecdn.com/valine@1.4/dist/Valine.min.js?time=1648484952115').then(pjax_valine)
   volantis.pjax.push(pjax_valine);
 </script>
 
@@ -3450,7 +3450,7 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
 
   function loadSearchScript() {
     // see: layout/_partial/scripts/_ctrl/cdnCtrl.ejs
-    return volantis.js("/js/search/hexo.js?time=1648484897345");
+    return volantis.js("/js/search/hexo.js?time=1648484952116");
   }
 
   function loadSearchService() {
@@ -3741,7 +3741,7 @@ window.matchMedia('(prefers-color-scheme: light)').addListener(darkModelListener
 
 
 
-  <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"YarTang's Blog","url":"http://yartang.top/","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/","sameAs":["https://github.com/volantis-x"],"description":""},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"http://yartang.top/","name":"YarTang's Blog"}},{"@type":"ListItem","position":2,"item":{"@id":"http://yartang.top/categories/redis/","name":"redis"}},{"@type":"ListItem","position":3,"item":{"@id":"http://yartang.top/2022/03/28/Redis 分布式锁简介/","name":"Redis分布式锁简介"}}]},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Redis分布式锁简介","description":"","datePublished":"2022-03-27T18:39:53.000Z","dateModified":"2022-03-28T16:27:47.924Z","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"http://yartang.top/2022/03/28/Redis%20%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%AE%80%E4%BB%8B/"},"author":{"@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/"},"publisher":{"@type":"Organization","name":"YarTang's Blog","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"http://yartang.top/2022/03/28/Redis%20%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%AE%80%E4%BB%8B/","wordCount":0,"articleSection":"redis","keywords":"redis,分布式锁,分布式算法","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
+  <script type="application/ld+json">[{"@context":"http://schema.org","@type":"Organization","name":"YarTang's Blog","url":"http://yartang.top/","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},{"@context":"http://schema.org","@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/","sameAs":["https://github.com/volantis-x"],"description":""},{"@context":"http://schema.org","@type":"BreadcrumbList","itemListElement":[{"@type":"ListItem","position":1,"item":{"@id":"http://yartang.top/","name":"YarTang's Blog"}},{"@type":"ListItem","position":2,"item":{"@id":"http://yartang.top/categories/redis/","name":"redis"}},{"@type":"ListItem","position":3,"item":{"@id":"http://yartang.top/2022/03/28/Redis 分布式锁简介/","name":"Redis分布式锁简介"}}]},{"@context":"http://schema.org","@type":"BlogPosting","headline":"Redis分布式锁简介","description":"","datePublished":"2022-03-27T18:39:53.000Z","dateModified":"2022-03-28T16:28:56.935Z","inLanguage":"zh-CN","mainEntityOfPage":{"@type":"WebPage","@id":"http://yartang.top/2022/03/28/Redis%20%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%AE%80%E4%BB%8B/"},"author":{"@type":"Person","name":"yartang","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png"},"url":"http://yartang.top/"},"publisher":{"@type":"Organization","name":"YarTang's Blog","logo":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}},"url":"http://yartang.top/2022/03/28/Redis%20%E5%88%86%E5%B8%83%E5%BC%8F%E9%94%81%E7%AE%80%E4%BB%8B/","wordCount":0,"articleSection":"redis","keywords":"redis,分布式锁,分布式算法","image":{"@type":"ImageObject","url":"/media/org.volantis/blog/favicon/android-chrome-192x192.png","width":192,"height":192}}]</script>
 
 
 <!-- more -->
